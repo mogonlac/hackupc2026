@@ -4,6 +4,9 @@ import StatStrip from './StatStrip';
 import { SCORE_COLORS, SCORE_BADGE_TEXT } from '../utils/scoring';
 import { navToHash } from '../utils/nav';
 import { fmtResolveSpeed, fmtTimestampLong, fmtDuration, durationBetween, initials } from '../utils/format';
+import {
+  isRequestOpen, isRequestResolved, ageOpenMs, activeWorkWindowMs, hoursForResolvedItem,
+} from '../utils/requestModel';
 import { COLORS, MONO_STACK, TABLE_BASE, TABLE_TH, TABLE_TD, TNUM } from '../utils/theme';
 
 function complexityColor(c) {
@@ -16,18 +19,14 @@ const TRAJECTORY_STYLE = { rising: '#c2410c', stable: '#64748b', falling: '#1665
 
 function RequestDetail({ request, memberName, now, onClose, detailRef }) {
   if (!request) return null;
-  const created = request.created_at || request.timestamp;
+  const created = request.created_at;
   const started = request.started_at;
   const finished = request.finished_at;
-  const ageOpenMs = created ? (now - new Date(created).getTime()) : null;
-  const activeWorkMs = started
-    ? (request.status === 'pending'
-        ? (now - new Date(started).getTime())
-        : durationBetween(started, finished))
-    : null;
-  const spentMs = request.processHours != null
-    ? request.processHours * 3_600_000
-    : durationBetween(started, finished);
+  const accepted = request.accepted_at;
+  const qAge = created ? ageOpenMs(request, now) : null;
+  const activeWorkMs = started ? activeWorkWindowMs(request, now) : null;
+  const spentH = isRequestResolved(request) ? hoursForResolvedItem(request) : null;
+  const spentMs = spentH != null ? spentH * 3_600_000 : durationBetween(started, finished);
 
   return (
     <div
@@ -57,8 +56,12 @@ function RequestDetail({ request, memberName, now, onClose, detailRef }) {
           {memberName} (assignee)
         </div>
         <div>
-          <span style={{ color: COLORS.textFaint, fontWeight: 600 }}>From (requester id)</span><br />
-          <code style={{ fontSize: 11 }}>{request.requester_id || '—'}</code>
+          <span style={{ color: COLORS.textFaint, fontWeight: 600 }}>Requester</span><br />
+          {request.requester_name
+            ? request.requester_name
+            : (request.requester_id
+              ? <code style={{ fontSize: 11 }}>{request.requester_id}</code>
+              : '—')}
         </div>
         <div>
           <span style={{ color: COLORS.textFaint, fontWeight: 600 }}>Direction</span><br />
@@ -69,8 +72,18 @@ function RequestDetail({ request, memberName, now, onClose, detailRef }) {
           <span style={{ fontFamily: MONO_STACK }}>{fmtTimestampLong(created)}</span>
         </div>
         <div>
+          <span style={{ color: COLORS.textFaint, fontWeight: 600 }}>Accepted</span><br />
+          {accepted
+            ? <span style={{ fontFamily: MONO_STACK }}>{fmtTimestampLong(accepted)}</span>
+            : '—'}
+        </div>
+        <div>
           <span style={{ color: COLORS.textFaint, fontWeight: 600 }}>Status</span><br />
-          <span style={{ textTransform: 'uppercase', fontWeight: 700, color: request.status === 'pending' ? '#9a3412' : '#166534' }}>{request.status}</span>
+          <span style={{
+            textTransform: 'uppercase', fontWeight: 700,
+            color: isRequestOpen(request) ? '#9a3412' : '#166534',
+          }}>{request.status}
+          </span>
         </div>
         <div>
           <span style={{ color: COLORS.textFaint, fontWeight: 600 }}>Work began</span><br />
@@ -81,7 +94,7 @@ function RequestDetail({ request, memberName, now, onClose, detailRef }) {
         </div>
         <div>
           <span style={{ color: COLORS.textFaint, fontWeight: 600 }}>Age (queue)</span><br />
-          {fmtDuration(ageOpenMs)}
+          {fmtDuration(qAge)}
         </div>
         <div>
           <span style={{ color: COLORS.textFaint, fontWeight: 600 }}>Time in progress</span><br />
@@ -112,7 +125,7 @@ function RequestTable({
 }) {
   const sorted = [...requests].sort((a, b) => {
     if (a.status === b.status) return b.complexity - a.complexity;
-    return a.status === 'pending' ? -1 : 1;
+    return isRequestOpen(a) ? -1 : 1;
   });
   const baseMemberNav = { kind: 'member', deptId, memberId };
   return (
@@ -128,12 +141,13 @@ function RequestTable({
         {sorted.length === 0 ? (
           <tr><td colSpan={8} style={{ padding: 14, color: COLORS.textFaint }}>No {direction} requests.</td></tr>
         ) : sorted.map((r, i) => {
-          const isP = r.status === 'pending';
-          const created = r.created_at || r.timestamp;
+          const isP = isRequestOpen(r);
+          const created = r.created_at;
           const started = r.started_at;
           const finished = r.finished_at;
-          const spentMs = r.processHours != null
-            ? r.processHours * 3_600_000
+          const spentH = isRequestResolved(r) ? hoursForResolvedItem(r) : null;
+          const spentMs = spentH != null
+            ? spentH * 3_600_000
             : durationBetween(started, finished);
           const isSel = selectedId === r.id;
           const href = navToHash({ ...baseMemberNav, requestId: r.id });
@@ -248,7 +262,7 @@ export default function MemberView({
         <RequestDetail
           request={activeReq}
           memberName={member.name}
-          now={now.getTime()}
+          now={now}
           onClose={() => onSelectRequest?.(null)}
           detailRef={detailRef}
         />

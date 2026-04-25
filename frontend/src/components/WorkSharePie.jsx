@@ -9,20 +9,50 @@ const PALETTE = [
  * Slices: { label, value, fullLabel? } — value = positive units (e.g. resolved counts).
  */
 export default function WorkSharePie({ items, title, size = 200 }) {
-  const slices = (items || []).filter(x => (x.value || 0) > 0);
+  const allItems = items || [];
+  const slices = allItems.filter(x => (x.value || 0) > 0);
   const total = slices.reduce((s, x) => s + x.value, 0);
+  const colorByKey = new Map();
+  slices.forEach((s, i) => { colorByKey.set(s.fullLabel || s.label, PALETTE[i % PALETTE.length]); });
 
   if (total <= 0) {
+    if (allItems.length === 0) {
+      return (
+        <div style={{
+          flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', padding: 12,
+        }}
+        >
+          {title
+            ? <div style={{ fontSize: 10, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, alignSelf: 'stretch' }}>{title}</div>
+            : null}
+          <div style={{ fontSize: 12, color: COLORS.textFaint, textAlign: 'center' }}>No data to chart.</div>
+        </div>
+      );
+    }
     return (
-      <div style={{
-        flex: 1, minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', padding: 12,
-      }}
-      >
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, minWidth: 0 }}>
         {title
-          ? <div style={{ fontSize: 10, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, alignSelf: 'stretch' }}>{title}</div>
+          ? <div style={{ fontSize: 10, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{title}</div>
           : null}
-        <div style={{ fontSize: 12, color: COLORS.textFaint, textAlign: 'center' }}>No data to chart.</div>
+        <div style={{ fontSize: 11, color: COLORS.textFaint, marginBottom: 8 }}>No completed work yet — all employees</div>
+        <ul style={{
+          listStyle: 'none', margin: 0, padding: 0, fontSize: 10, lineHeight: 1.4,
+          maxHeight: 180, overflowY: 'auto',
+        }}
+        >
+          {allItems.map((item, i) => {
+            const key = item.fullLabel || item.label;
+            return (
+              <li key={`${key}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }} title={key}>
+                <span style={{ width: 8, height: 8, borderRadius: 1, background: '#94a3b8', flexShrink: 0 }} />
+                <span style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
+                <span style={{ color: '#64748b', ...TNUM, flexShrink: 0 }}>0%</span>
+                <span style={{ color: COLORS.textFaint, ...TNUM, fontSize: 9, flexShrink: 0 }}>(0)</span>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     );
   }
@@ -79,12 +109,14 @@ export default function WorkSharePie({ items, title, size = 200 }) {
           flex: '1 1 120px', minWidth: 0, maxHeight: 180, overflowY: 'auto',
         }}
         >
-          {slices.map((item, i) => {
-            const v = item.value;
-            const pct = 100 * v / total;
+          {allItems.map((item, i) => {
+            const v = item.value || 0;
+            const pct = total > 0 ? 100 * v / total : 0;
+            const key = item.fullLabel || item.label;
+            const dot = v > 0 ? (colorByKey.get(key) || PALETTE[0]) : '#94a3b8';
             return (
-              <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }} title={item.fullLabel || item.label}>
-                <span style={{ width: 8, height: 8, borderRadius: 1, background: PALETTE[i % PALETTE.length], flexShrink: 0 }} />
+              <li key={`${key}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }} title={key}>
+                <span style={{ width: 8, height: 8, borderRadius: 1, background: dot, flexShrink: 0 }} />
                 <span style={{ minWidth: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
                 <span style={{ color: '#64748b', ...TNUM, flexShrink: 0 }}>{pct.toFixed(0)}%</span>
                 <span style={{ color: COLORS.textFaint, ...TNUM, fontSize: 9, flexShrink: 0 }}>({v})</span>

@@ -11,46 +11,20 @@
  * (so it's still reachable via direct navigation) but excluded from the company aggregate.
  */
 
+import {
+  normaliseRequest, isRequestOpen, isRequestResolved, isOpenAtDayEnd, hoursForResolvedItem,
+} from './requestModel';
+
+export { normaliseRequest };
+
 export const METRICS_AS_OF = new Date('2026-08-15T00:00:00Z');
 export const HIDDEN_COMPANY_DEPT_IDS = new Set(['cal']);
 
-export function normaliseRequest(r, assigneeId) {
-  if (r.__normalised) return r;
-  const created_at = r.created_at || r.timestamp;
-  return {
-    ...r,
-    __normalised: true,
-    id: r.id || `gen_${(assigneeId || 'a').replace(/\W/g, '')}_${String(r.description || 'x').slice(0, 8)}`,
-    requester_id: r.requester_id || 'org',
-    assignee_id: r.assignee_id || assigneeId,
-    description: r.description,
-    direction: r.direction,
-    complexity: r.complexity,
-    created_at,
-    started_at: r.started_at || r.workBeganAt || created_at,
-    finished_at: r.finished_at || r.finishedAt,
-    status: r.status,
-    processHours: r.processHours,
-  };
-}
-
-function hoursForResolved(r) {
-  if (r.processHours != null && r.processHours >= 0) return r.processHours;
-  const b = new Date(r.started_at).getTime();
-  const f = r.finished_at
-    ? new Date(r.finished_at).getTime()
-    : new Date(r.timestamp || r.created_at).getTime();
-  if (Number.isFinite(f) && Number.isFinite(b) && f > b) {
-    return (f - b) / 3600000;
-  }
-  return null;
-}
-
 function resolveSpeedHPerCForRequests(reqs) {
-  const resolved = reqs.filter(x => x.status === 'resolved');
+  const resolved = reqs.filter(x => isRequestResolved(x));
   const parts = [];
   for (const r of resolved) {
-    const h = hoursForResolved(r);
+    const h = hoursForResolvedItem(r);
     if (h == null) continue;
     parts.push(h / Math.max(0.1, r.complexity || 1));
   }
@@ -59,10 +33,10 @@ function resolveSpeedHPerCForRequests(reqs) {
 }
 
 function avgHoursPerItemForRequests(reqs) {
-  const resolved = reqs.filter(x => x.status === 'resolved');
+  const resolved = reqs.filter(x => isRequestResolved(x));
   const hours = [];
   for (const r of resolved) {
-    const h = hoursForResolved(r);
+    const h = hoursForResolvedItem(r);
     if (h != null) hours.push(h);
   }
   if (hours.length === 0) return null;
@@ -85,13 +59,7 @@ function buildTrend14(allRequests, now) {
     const dayEnd = end - (days - 1 - i) * dayMs + dayMs;
     let open = 0;
     for (const r of allRequests) {
-      const created = new Date(r.created_at).getTime();
-      if (!Number.isFinite(created) || created > dayEnd) continue;
-      if (r.status === 'resolved') {
-        const fin = r.finished_at ? new Date(r.finished_at).getTime() : null;
-        if (fin != null && Number.isFinite(fin) && fin < dayEnd) continue;
-      }
-      open++;
+      if (isOpenAtDayEnd(r, dayEnd)) open++;
     }
     out[i] = open;
   }
@@ -104,7 +72,7 @@ function buildDailyResolved(allRequests, now, days = 14) {
   const dayMs = 86400000;
   const end = new Date(now).setHours(0, 0, 0, 0);
   for (const r of allRequests) {
-    if (r.status !== 'resolved' || !r.finished_at) continue;
+    if (!isRequestResolved(r) || !r.finished_at) continue;
     const fin = new Date(r.finished_at).getTime();
     if (!Number.isFinite(fin)) continue;
     const dayIdx = days - 1 - Math.floor((end + dayMs - fin) / dayMs);
@@ -133,7 +101,7 @@ const AGING_BUCKET_LABELS = ['<1d', '1–3d', '3–7d', '7–14d', '14d+'];
 function buildAgingBuckets(allRequests, now) {
   const out = [0, 0, 0, 0, 0];
   for (const r of allRequests) {
-    if (r.status !== 'pending') continue;
+    if (!isRequestOpen(r)) continue;
     const ageDays = (now - new Date(r.created_at).getTime()) / 86400000;
     if (ageDays < 1) out[0]++;
     else if (ageDays < 3) out[1]++;
@@ -164,7 +132,7 @@ export const AGING_COLORS = ['#16a34a', '#84cc16', '#eab308', '#f97316', '#dc262
 function countResolvedSince(allRequests, sinceMs) {
   let n = 0;
   for (const r of allRequests) {
-    if (r.status !== 'resolved' || !r.finished_at) continue;
+    if (!isRequestResolved(r) || !r.finished_at) continue;
     const fin = new Date(r.finished_at).getTime();
     if (Number.isFinite(fin) && fin >= sinceMs) n++;
   }
@@ -181,7 +149,7 @@ export function computeScores(departments, options = {}) {
 
   const memberPre = allMembers.map(({ m, department_id, dept }) => {
     const reqs = (m.requests || []).map(r => normaliseRequest(r, m.id));
-    const pending = reqs.filter(x => x.status === 'pending');
+    const pending = reqs.filter(x => isRequestOpen(x));
     const volume = pending.length;
     const avgCplxPend = pending.length > 0
       ? pending.reduce((s, r) => s + (r.complexity || 0), 0) / pending.length
@@ -196,7 +164,7 @@ export function computeScores(departments, options = {}) {
       memberId: m.id, name: m.name, role: m.role,
       volume, difficulty: avgCplxPend, staleness,
       pending,
-      resolved: reqs.filter(x => x.status === 'resolved'),
+      resolved: reqs.filter(x => isRequestResolved(x)),
       reqs,
       oldestPendingDays,
     };

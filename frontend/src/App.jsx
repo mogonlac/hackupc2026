@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import rawData from './data/db.json';
+import staticDb from './data/db.json';
 import { computeScores } from './utils/scoring';
+import { fetchSnapshot } from './utils/api';
+import { mergeSnapshot } from './utils/mergeData';
 import { hashToNav, navToHash, navStack, navsEqual, popNav } from './utils/nav';
 import { TOP_BAR_H, TAB_BAR_H, PANEL_HEADER_H, Z } from './utils/layout';
 import { COLORS, FONT_STACK, TNUM } from './utils/theme';
@@ -9,11 +11,12 @@ import { usePersistedState } from './utils/persist';
 import CompanyView from './components/CompanyView';
 import DepartmentView from './components/DepartmentView';
 import MemberView from './components/MemberView';
-import AttentionView from './components/AttentionView';
 import TabBar from './components/TabBar';
 import LiveRequestsPanel from './components/LiveRequestsPanel';
+import RecommendationsPanel from './components/RecommendationsPanel';
 import GraphingPanel from './components/GraphingPanel';
 import slapHand from './assets/slap-hand.png';
+import { buildRecommendations } from './utils/recommendations';
 
 export default function App() {
   /* "now" only ticks once a minute and is the SINGLE source of truth across the app
@@ -24,8 +27,20 @@ export default function App() {
     return () => clearInterval(i);
   }, []);
 
-  /* Heavy aggregation runs once per `now` tick, not per render. */
-  const data = useMemo(() => computeScores(rawData.departments, { now }), [now]);
+  /* Start with the static illustration data immediately; merge real people from
+   * the backend in the background. If the backend is unreachable, nothing breaks. */
+  const [rawData, setRawData] = useState(staticDb);
+
+  const refreshData = useCallback(() => {
+    fetchSnapshot().then(snap => {
+      if (snap) setRawData(mergeSnapshot(staticDb, snap));
+    });
+  }, []);
+
+  useEffect(() => { refreshData(); }, [refreshData]);
+
+  /* Heavy aggregation runs once per `now` tick or when rawData changes. */
+  const data = useMemo(() => computeScores(rawData.departments, { now }), [now, rawData]);
 
   /* URL-hash-backed nav state. */
   const [nav, setNav] = useState(() => hashToNav(window.location.hash));
@@ -49,6 +64,8 @@ export default function App() {
   const [liveRequestsOpen, setLiveRequestsOpen] = usePersistedState('live.open', false);
   const [graphingOpen, setGraphingOpen] = usePersistedState('graphing.open', false);
   const [liveContentHeight, setLiveContentHeight] = usePersistedState('live.height', 220);
+  const [recommendationsOpen, setRecommendationsOpen] = usePersistedState('recommendations.open', true);
+  const [recommendationsContentHeight, setRecommendationsContentHeight] = usePersistedState('recommendations.height', 200);
   const [graphingContentHeight, setGraphingContentHeight] = usePersistedState('graphing.height', 240);
 
   const liveFilterRef = useRef(null);
@@ -80,8 +97,7 @@ export default function App() {
   const stack = useMemo(() => navStack(nav), [nav]);
   const tabs = useMemo(() => stack.map((frame, i) => {
     let label = 'Company';
-    if (frame.kind === 'attention') label = 'Attention';
-    else if (frame.kind === 'dept') {
+    if (frame.kind === 'dept') {
       const d = data.departments.find(d => d.id === frame.deptId);
       label = d?.name ?? 'Department';
     } else if (frame.kind === 'member') {
@@ -100,13 +116,33 @@ export default function App() {
     : null;
 
   const liveBlockH = PANEL_HEADER_H + (liveRequestsOpen ? liveContentHeight : 0);
-  const graphingBottomPx = TAB_BAR_H + liveBlockH;
-  const mainPadBottom = 20 + TAB_BAR_H + liveBlockH + (graphingOpen ? PANEL_HEADER_H + graphingContentHeight : 0);
+  const recBlockH = PANEL_HEADER_H + (recommendationsOpen ? recommendationsContentHeight : 0);
+  const graphingBottomPx = TAB_BAR_H + liveBlockH + recBlockH;
+  const mainPadBottom = 20 + TAB_BAR_H + liveBlockH + recBlockH + (graphingOpen ? PANEL_HEADER_H + graphingContentHeight : 0);
 
   const { liveRequests, liveTitle, graphingView } = useMemo(
     () => buildView({ nav, data, currentDept, currentMember }),
     [nav, data, currentDept, currentMember],
   );
+
+  const recommendationsModel = useMemo(
+    () => buildRecommendations({ nav, data, currentDept, currentMember, now }),
+    [nav, data, currentDept, currentMember, now],
+  );
+
+  const onRecommendationNav = useCallback((target) => {
+    if (!target || !target.kind) return;
+    if (target.kind === 'company') goNav({ kind: 'company' });
+    else if (target.kind === 'dept' && target.deptId) goNav({ kind: 'dept', deptId: target.deptId });
+    else if (target.kind === 'member' && target.deptId && target.memberId) {
+      goNav({
+        kind: 'member',
+        deptId: target.deptId,
+        memberId: target.memberId,
+        requestId: target.requestId,
+      });
+    }
+  }, [goNav]);
 
   const openRequestFromLive = useCallback((r) => {
     if (!r?._deptId || !r?._memberId || !r.id) return;
@@ -122,7 +158,7 @@ export default function App() {
     );
   }, [goNav, currentMember, currentDept]);
 
-  const isOrgView = nav.kind !== 'attention';
+  const isOrgView = true;
 
   return (
     <div style={{ minHeight: '100vh', background: COLORS.bg, fontFamily: FONT_STACK, ...TNUM }}>
@@ -138,22 +174,17 @@ export default function App() {
             alt="SLAP"
             width={36}
             height={36}
-            style={{ display: 'block', width: 36, height: 36, imageRendering: 'pixelated' }}
+            onClick={refreshData}
+            title="Refresh live data"
+            style={{ display: 'block', width: 36, height: 36, imageRendering: 'pixelated', cursor: 'pointer' }}
           />
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               type="button"
               onClick={() => goNav({ kind: 'company' })}
-              style={topNavBtn(isOrgView)}
+              style={topNavBtn(nav.kind === 'company' || nav.kind === 'dept' || nav.kind === 'member')}
             >
               Dashboard
-            </button>
-            <button
-              type="button"
-              onClick={() => goNav({ kind: 'attention' })}
-              style={topNavBtn(nav.kind === 'attention')}
-            >
-              Attention
             </button>
           </div>
         </div>
@@ -166,18 +197,6 @@ export default function App() {
       </div>
 
       <div style={{ paddingBottom: mainPadBottom }}>
-        {nav.kind === 'attention' && (
-          <AttentionView
-            data={data}
-            onPersonClick={(d, m) => goNav({ kind: 'member', deptId: d.id, memberId: m.id })}
-            onRequestClick={(d, m, requestId) => goNav(
-              requestId
-                ? { kind: 'member', deptId: d.id, memberId: m.id, requestId }
-                : { kind: 'member', deptId: d.id, memberId: m.id },
-            )}
-            onDeptClick={(d) => goNav({ kind: 'dept', deptId: d.id })}
-          />
-        )}
         {nav.kind === 'company' && (
           <CompanyView data={data} onDeptClick={(d) => goNav({ kind: 'dept', deptId: d.id })} />
         )}
@@ -207,6 +226,16 @@ export default function App() {
             contentHeight={graphingContentHeight}
             onContentHeightChange={setGraphingContentHeight}
             bottomPx={graphingBottomPx}
+          />
+          <RecommendationsPanel
+            title={recommendationsModel.title}
+            items={recommendationsModel.items}
+            open={recommendationsOpen}
+            onOpenChange={setRecommendationsOpen}
+            contentHeight={recommendationsContentHeight}
+            onContentHeightChange={setRecommendationsContentHeight}
+            bottomPx={TAB_BAR_H + liveBlockH}
+            onNavigate={onRecommendationNav}
           />
           <LiveRequestsPanel
             requests={liveRequests}
@@ -244,23 +273,79 @@ function topNavBtn(active) {
   };
 }
 
+/** Map member id → { name, dept } for resolving requester/assignee parties. */
+function buildMemberById(data) {
+  const map = new Map();
+  for (const d of data?.departments || []) {
+    for (const m of d.members || []) {
+      map.set(m.id, { name: m.name, dept: d.name });
+    }
+  }
+  return map;
+}
+
+/** All members, stable order — used to map legacy `req_*` ids to a real name + department. */
+function allMembersSorted(memberById) {
+  return [...memberById.entries()]
+    .map(([id, { name, dept }]) => ({ id, name, dept }))
+    .sort((a, b) => a.id.localeCompare(b.id, 'en'));
+}
+
+function requesterPartyLine(r, memberById) {
+  if (r.requester_name) return r.requester_name;
+  const id = r.requester_id;
+  if (id == null || id === '' || id === 'org') return 'Organization';
+  const p = memberById.get(id);
+  if (p) return `${p.name} · ${p.dept}`;
+
+  // Demo/legacy data often uses `req_123` instead of a real member id — pick a
+  // deterministic org member so the UI always shows "Person · Department".
+  const pool = allMembersSorted(memberById);
+  if (pool.length === 0) return 'Organization';
+  const reqNum = String(id).match(/req_(\d+)/i);
+  let idx = reqNum
+    ? parseInt(reqNum[1], 10) % pool.length
+    : [...String(id)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0) % pool.length;
+  const assigneeId = r.assignee_id;
+  for (let k = 0; k < pool.length; k++) {
+    const m = pool[(idx + k) % pool.length];
+    if (m.id !== assigneeId) return `${m.name} · ${m.dept}`;
+  }
+  return `${pool[idx].name} · ${pool[idx].dept}`;
+}
+
+function enrichLiveRequest(r, memberById) {
+  const assignee = `${r._memberName} · ${r._deptName}`;
+  const fromReq = requesterPartyLine(r, memberById);
+  const inbound = r.direction === 'inbound';
+  return {
+    ...r,
+    _from: inbound ? fromReq : assignee,
+    _to: inbound ? assignee : fromReq,
+  };
+}
+
 /**
  * Compute the per-view payload for LiveRequestsPanel + GraphingPanel.
  * Kept separate from the App component to keep the JSX legible.
  */
 function buildView({ nav, data, currentDept, currentMember }) {
+  const memberById = buildMemberById(data);
+
   if (nav.kind === 'company') {
     const surface = data.visibleDepartments.slice().sort((a, b) => b.deptScore - a.deptScore);
     const allPeople = surface.flatMap(d => d.members);
     const allRequests = surface.flatMap(dept =>
       dept.members.flatMap(m =>
-        (m.requests || []).map(r => ({
-          ...r,
-          _memberName: m.name,
-          _deptName: dept.name,
-          _deptId: dept.id,
-          _memberId: m.id,
-        })),
+        (m.requests || []).map(r =>
+          enrichLiveRequest({
+            ...r,
+            _memberName: m.name,
+            _deptName: dept.name,
+            _deptId: dept.id,
+            _memberId: m.id,
+          }, memberById),
+        ),
       ),
     );
     return {
@@ -275,20 +360,22 @@ function buildView({ nav, data, currentDept, currentMember }) {
         })),
         workloadStacked: true,
         workloadCaption: 'Departments ranked by workload — open requests vs completed',
-        workShare: workShareResolvedByMembers(allPeople, 12),
+        workShare: workShareByMembers(allPeople),
         workShareTitle: 'Who completed the most work',
       },
     };
   }
   if (nav.kind === 'dept' && currentDept) {
     const allRequests = currentDept.members.flatMap(m =>
-      (m.requests || []).map(r => ({
-        ...r,
-        _memberName: m.name,
-        _deptName: currentDept.name,
-        _deptId: currentDept.id,
-        _memberId: m.id,
-      })),
+      (m.requests || []).map(r =>
+        enrichLiveRequest({
+          ...r,
+          _memberName: m.name,
+          _deptName: currentDept.name,
+          _deptId: currentDept.id,
+          _memberId: m.id,
+        }, memberById),
+      ),
     );
     const sortedM = [...currentDept.members].sort((a, b) => b.burdenScore - a.burdenScore);
     return {
@@ -303,7 +390,7 @@ function buildView({ nav, data, currentDept, currentMember }) {
         })),
         workloadStacked: true,
         workloadCaption: `${currentDept.name} — people ranked by workload; open requests vs completed`,
-        workShare: workShareResolvedByMembers(currentDept.members, 12),
+        workShare: workShareByMembers(currentDept.members),
         workShareTitle: 'Who completed the most work',
       },
     };
@@ -313,13 +400,15 @@ function buildView({ nav, data, currentDept, currentMember }) {
     const pend = currentMember.pendingCount || 0;
     const res = currentMember.resolvedCount || 0;
     return {
-      liveRequests: reqs.map(r => ({
-        ...r,
-        _memberName: currentMember.name,
-        _deptName: currentDept.name,
-        _deptId: currentDept.id,
-        _memberId: currentMember.id,
-      })),
+      liveRequests: reqs.map(r =>
+        enrichLiveRequest({
+          ...r,
+          _memberName: currentMember.name,
+          _deptName: currentDept.name,
+          _deptId: currentDept.id,
+          _memberId: currentMember.id,
+        }, memberById),
+      ),
       liveTitle: currentMember.name.toUpperCase(),
       graphingView: {
         workloadBars: [
@@ -356,21 +445,13 @@ function shortWorkerLabel(name) {
   return name.length > 14 ? `${name.slice(0, 13)}…` : name;
 }
 
-function workShareResolvedByMembers(members, maxSlices) {
-  const raw = (members || [])
+/** One row per employee (incl. 0 completed); pie uses only non-zero slices. */
+function workShareByMembers(members) {
+  return (members || [])
     .map(m => ({
       label: shortWorkerLabel(m.name),
       fullLabel: m.name,
       value: m.resolvedCount || 0,
     }))
-    .filter(x => x.value > 0)
     .sort((a, b) => b.value - a.value);
-  if (raw.length === 0) return [];
-  if (raw.length <= maxSlices) return raw;
-  const head = raw.slice(0, maxSlices - 1);
-  const tail = raw.slice(maxSlices - 1);
-  const otherVal = tail.reduce((s, x) => s + x.value, 0);
-  return otherVal > 0
-    ? [...head, { label: 'Other', fullLabel: `${tail.length} people`, value: otherVal }]
-    : head;
 }

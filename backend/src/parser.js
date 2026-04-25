@@ -14,16 +14,18 @@ Return ONLY valid JSON — no markdown, no explanation.
   "description": string,   // a clear, imperative instruction for the receiving team — e.g. "Update bagel cost to 50 in the pricing sheet"
   "team": string,          // which team should handle this — must be one of: ${TEAMS.join(', ')}
   "complexity": number,    // integer 1–10
-  "assignee_name": string  // specific person if @mentioned, otherwise ""
+  "assignee_name": string  // specific person if @mentioned OR named directly (e.g. "ask phoebe", "tell john", "have alice"), otherwise ""
 }
 
 Team routing guide:
-- Sales       → deals, contracts, pricing, clients, revenue, outreach
-- Engineering → bugs, code, infrastructure, integrations, technical changes
-- Operations  → processes, logistics, procurement, facilities, costs (like bagel pricing)
-- Data Science → reports, analytics, dashboards, data, metrics
-- Marketing   → campaigns, content, brand, social media, events
+- Sales       → deals, contracts, client pricing, revenue targets, outreach, partnerships
+- Engineering → anything involving a website, app, code, database, infrastructure, integrations, technical implementation — including changing a displayed price ON a website/system
+- Operations  → internal processes, logistics, procurement, facilities, physical/office costs, supplier pricing (NOT website changes)
+- Data Science → reports, analytics, dashboards, data pipelines, metrics, ML models
+- Marketing   → campaigns, content, brand, social media, events, copywriting
 - Product     → features, roadmap, design, UX, product decisions
+
+Key distinction: updating a price IN a spreadsheet or internal doc → Operations. Updating a price ON a website, app, or system → Engineering.
 
 Complexity scale:
 1–2  trivial (< 15 min)
@@ -44,9 +46,8 @@ Examples:
 
 async function parseRequest(messageText) {
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemma-4-31b-it',
     config: {
-      thinkingConfig: { thinkingBudget: 1024 },
       responseMimeType: 'application/json',
       systemInstruction: SYSTEM,
     },
@@ -93,9 +94,8 @@ Examples:
 
 async function parseOnboarding(messageText) {
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemma-4-31b-it',
     config: {
-      thinkingConfig: { thinkingBudget: 0 },
       responseMimeType: 'application/json',
       systemInstruction: ONBOARDING_SYSTEM,
     },

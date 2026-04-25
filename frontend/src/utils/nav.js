@@ -30,7 +30,7 @@ export function navsEqual(a, b) {
 export function navToHash(nav) {
   if (!nav) return '#/';
   switch (nav.kind) {
-    case 'attention': return '#/attention';
+    case 'attention': return '#/';
     case 'company':   return '#/';
     case 'dept':      return `#/dept/${encodeURIComponent(nav.deptId)}`;
     case 'member': {
@@ -46,7 +46,7 @@ export function hashToNav(hash) {
   const h = (hash || '').replace(/^#\/?/, '');
   if (!h) return { kind: 'company' };
   const parts = h.split('/').filter(Boolean).map(decodeURIComponent);
-  if (parts[0] === 'attention') return { kind: 'attention' };
+  if (parts[0] === 'attention') return { kind: 'company' };
   if (parts[0] === 'dept' && parts[1] && parts[2]) {
     if (parts[3] === 'r' && parts[4]) {
       return { kind: 'member', deptId: parts[1], memberId: parts[2], requestId: parts[4] };
@@ -62,7 +62,7 @@ export function hashToNav(hash) {
 /** Stack reconstruction from a single nav state — used to drive the bottom tab bar. */
 export function navStack(nav) {
   if (!nav) return [{ kind: 'company' }];
-  if (nav.kind === 'attention') return [{ kind: 'attention' }];
+  if (nav.kind === 'attention') return [{ kind: 'company' }];
   if (nav.kind === 'company')   return [{ kind: 'company' }];
   if (nav.kind === 'dept')      return [{ kind: 'company' }, nav];
   if (nav.kind === 'member') {

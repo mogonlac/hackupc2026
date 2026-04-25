@@ -68,11 +68,16 @@ function getChannelInfo(channelId) {
  * Pick the least-loaded registered member in a given team.
  * Returns the full member record or null if nobody is registered for that team.
  */
-function route(teamName, excludeSlackId = null) {
+function route(teamName, excludeSlackId = null, excludeTeam = null) {
   const teamLower = teamName.toLowerCase();
-  const candidates = Object.values(_registry).filter(
-    m => (m.team || '').toLowerCase() === teamLower && m.slackUserId !== excludeSlackId,
-  );
+  const excludeTeamLower = excludeTeam?.toLowerCase() || null;
+  const candidates = Object.values(_registry).filter(m => {
+    const mTeam = (m.team || '').toLowerCase();
+    if (mTeam !== teamLower) return false;
+    if (m.slackUserId === excludeSlackId) return false;
+    if (excludeTeamLower && mTeam === excludeTeamLower) return false;
+    return true;
+  });
   if (!candidates.length) return null;
 
   const snap = store.getSnapshot();

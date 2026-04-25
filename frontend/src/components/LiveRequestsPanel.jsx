@@ -1,5 +1,6 @@
 import { useRef, useMemo, useState } from 'react';
 import { navToHash } from '../utils/nav';
+import { isRequestOpen } from '../utils/requestModel';
 import { SCORE_COLORS } from '../utils/scoring';
 import { fmtTimestamp } from '../utils/format';
 import { TAB_BAR_H, PANEL_HEADER_H, clampPanelH, Z } from '../utils/layout';
@@ -8,12 +9,14 @@ import { usePersistedState } from '../utils/persist';
 
 function comparePending(a, b, sortKey, sortDir) {
   switch (sortKey) {
-    case 'department': {
-      const c = a._deptName.localeCompare(b._deptName, 'en', { sensitivity: 'base' });
+    case 'department': // legacy → To column
+    case 'to': {
+      const c = (a._to || '').localeCompare(b._to || '', 'en', { sensitivity: 'base' });
       return sortDir === 1 ? c : -c;
     }
-    case 'member': {
-      const c = a._memberName.localeCompare(b._memberName, 'en', { sensitivity: 'base' });
+    case 'member': // legacy → From column
+    case 'from': {
+      const c = (a._from || '').localeCompare(b._from || '', 'en', { sensitivity: 'base' });
       return sortDir === 1 ? c : -c;
     }
     case 'complexity':
@@ -42,16 +45,16 @@ export default function LiveRequestsPanel({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return requests
-      .map(r => ({ ...r, _created: r.created_at || r.timestamp }))
+      .map(r => ({ ...r, _created: r.created_at }))
       .filter((r) => {
-        if (fPendingOnly && r.status !== 'pending') return false;
+        if (fPendingOnly && !isRequestOpen(r)) return false;
         if (fHighC && (r.complexity || 0) < 7) return false;
         if (fOld) {
           const days = (now.getTime() - new Date(r._created).getTime()) / 86400000;
           if (days <= 7) return false;
         }
         if (q) {
-          const hay = `${r.id ?? ''} ${r.description} ${r._memberName} ${r._deptName}`.toLowerCase();
+          const hay = `${r.id ?? ''} ${r.description} ${r._from ?? ''} ${r._to ?? ''} ${r._memberName ?? ''} ${r._deptName ?? ''}`.toLowerCase();
           if (!hay.includes(q)) return false;
         }
         return true;
@@ -64,11 +67,19 @@ export default function LiveRequestsPanel({
     return list;
   }, [filtered, sortKey, sortDir]);
 
+  function isSameSortCol(key, current) {
+    if (key === current) return true;
+    if (key === 'from' && current === 'member') return true;
+    if (key === 'to' && current === 'department') return true;
+    return false;
+  }
   function onSortColumn(key) {
-    if (key === sortKey) setSortDir(d => -d);
+    if (isSameSortCol(key, sortKey)) setSortDir(d => -d);
     else {
       setSortKey(key);
-      setSortDir(key === 'department' || key === 'member' ? 1 : -1);
+      setSortDir(
+        key === 'to' || key === 'from' || key === 'department' || key === 'member' ? 1 : -1,
+      );
     }
   }
 
@@ -145,7 +156,7 @@ export default function LiveRequestsPanel({
               type="search"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Filter description, member, department…  (press / to focus)"
+              placeholder="Filter description, from, to, id…  (press / to focus)"
               style={{
                 flex: '1 1 220px', maxWidth: 360, fontSize: 11,
                 padding: '4px 8px', borderRadius: 4,
@@ -178,26 +189,28 @@ export default function LiveRequestsPanel({
             tableLayout: 'fixed', ...TNUM,
           }}>
             <colgroup>
-              <col style={{ width: 120 }} />
-              <col style={{ width: 112 }} />
-              <col style={{ width: 110 }} />
-              <col style={{ width: 96 }} />
+              <col style={{ width: 160, minWidth: 140 }} />
+              <col style={{ width: 160, minWidth: 140 }} />
+              <col style={{ width: 88 }} />
               <col />
-              <col style={{ width: 50 }} />
-              <col style={{ width: 132 }} />
+              <col style={{ width: 96, minWidth: 88 }} />
+              <col style={{ width: 128 }} />
             </colgroup>
             <thead>
               <tr style={{ background: COLORS.bgChrome, position: 'sticky', top: 0, zIndex: 1 }}>
                 {[
-                  { id: 'member', text: 'Member', sort: 'member' },
-                  { id: 'dept', text: 'Department', sort: 'department' },
-                  { id: 'dir', text: 'Direction', sort: null },
+                  { id: 'from', text: 'Request from', sort: 'from' },
+                  { id: 'to', text: 'Request to', sort: 'to' },
                   { id: 'id', text: 'ID', sort: null },
                   { id: 'desc', text: 'Description', sort: null },
                   { id: 'cplx', text: 'Complexity', sort: 'complexity', align: 'center' },
                   { id: 'ts', text: 'Created', sort: 'timestamp' },
                 ].map(col => {
-                  const active = col.sort && sortKey === col.sort;
+                  const sortKeyForActive = col.sort;
+                  const active = sortKeyForActive
+                    && (sortKey === sortKeyForActive
+                      || (sortKeyForActive === 'from' && sortKey === 'member')
+                      || (sortKeyForActive === 'to' && sortKey === 'department'));
                   const ariaSort = active ? (sortDir === 1 ? 'ascending' : 'descending') : (col.sort ? 'none' : undefined);
                   return (
                     <th
@@ -210,7 +223,7 @@ export default function LiveRequestsPanel({
                         fontWeight: 600, fontSize: 11, whiteSpace: 'nowrap',
                         color: '#333', cursor: col.sort ? 'pointer' : 'default',
                         userSelect: 'none', textTransform: 'uppercase', letterSpacing: '0.04em',
-                        overflow: 'hidden', textOverflow: 'ellipsis',
+                        overflow: col.id === 'cplx' ? 'visible' : 'hidden', textOverflow: 'ellipsis',
                       }}
                     >
                       {col.text}
@@ -223,7 +236,7 @@ export default function LiveRequestsPanel({
             <tbody>
               {pending.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ padding: '16px 14px', color: COLORS.textFaint, fontStyle: 'italic', fontSize: 12 }}>
+                  <td colSpan={6} style={{ padding: '16px 14px', color: COLORS.textFaint, fontStyle: 'italic', fontSize: 12 }}>
                     No requests match the filters.
                   </td>
                 </tr>
@@ -234,21 +247,9 @@ export default function LiveRequestsPanel({
                   : undefined;
                 return (
                 <tr key={r.id} style={{ background: i % 2 === 0 ? COLORS.bg : '#f3f3f3' }}>
-                  <td style={{ ...td, maxWidth: 120 }}>{r._memberName}</td>
-                  <td style={{ ...td, maxWidth: 112 }}>{r._deptName}</td>
-                  <td style={{ ...td, overflow: 'visible' }}>
-                    <span
-                      title={r.direction === 'outbound' ? 'Outbound' : 'Inbound'}
-                      style={{
-                        display: 'inline-block', whiteSpace: 'nowrap',
-                        fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 2,
-                        background: '#eef2f7', color: '#475569', textTransform: 'none', letterSpacing: '0.02em',
-                      }}
-                    >
-                      {r.direction === 'outbound' ? '↗ Outbound' : '↘ Inbound'}
-                    </span>
-                  </td>
-                  <td style={{ ...td, fontFamily: MONO_STACK, fontSize: 10, color: COLORS.textFaint, maxWidth: 96 }}>
+                  <td style={tdFromTo} title={r._from}>{r._from || '—'}</td>
+                  <td style={tdFromTo} title={r._to}>{r._to || '—'}</td>
+                  <td style={{ ...td, fontFamily: MONO_STACK, fontSize: 10, color: COLORS.textFaint, maxWidth: 88 }}>
                     {canLink
                       ? (
                           <a
@@ -274,7 +275,7 @@ export default function LiveRequestsPanel({
                         )
                       : (r.description)}
                   </td>
-                  <td style={{ ...td, textAlign: 'center', fontFamily: MONO_STACK, width: 50 }}>
+                  <td style={{ ...td, textAlign: 'center', fontFamily: MONO_STACK, minWidth: 88 }}>
                     <span style={{
                       fontWeight: 700,
                       color: r.complexity >= 8 ? SCORE_COLORS[5] : r.complexity >= 5 ? SCORE_COLORS[3] : SCORE_COLORS[1],
@@ -294,4 +295,12 @@ export default function LiveRequestsPanel({
 const td = {
   padding: '7px 10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
   borderBottom: `1px solid ${COLORS.borderSoft}`,
+};
+
+const tdFromTo = {
+  ...td,
+  whiteSpace: 'normal',
+  lineHeight: 1.35,
+  wordBreak: 'break-word',
+  verticalAlign: 'top',
 };

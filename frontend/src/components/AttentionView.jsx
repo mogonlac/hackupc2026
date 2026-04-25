@@ -2,6 +2,7 @@ import ScoreBox from './ScoreBox';
 import Sparkline from './Sparkline';
 import AgingChart from './AgingChart';
 import { AGING_LABELS, AGING_COLORS } from '../utils/scoring';
+import { isRequestOpen } from '../utils/requestModel';
 import { COLORS, TNUM, MONO_STACK } from '../utils/theme';
 
 export default function AttentionView({ data, onPersonClick, onRequestClick, onDeptClick }) {
@@ -23,7 +24,7 @@ export default function AttentionView({ data, onPersonClick, onRequestClick, onD
   const pendingRows = [];
   for (const { m, dept } of all) {
     for (const r of m.requests || []) {
-      if (r.status !== 'pending') continue;
+      if (!isRequestOpen(r)) continue;
       const days = (now - new Date(r.created_at).getTime()) / 86400000;
       pendingRows.push({ m, dept, r, days });
     }
@@ -44,7 +45,7 @@ export default function AttentionView({ data, onPersonClick, onRequestClick, onD
   const heavyUnstarted = [];
   for (const { m, dept } of all) {
     for (const r of m.requests || []) {
-      if (r.status !== 'pending') continue;
+      if (!isRequestOpen(r)) continue;
       if ((r.complexity || 0) < 8) continue;
       if (r.started_at) continue;
       heavyUnstarted.push({ m, dept, r });

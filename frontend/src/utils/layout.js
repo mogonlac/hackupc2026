@@ -7,7 +7,8 @@ export const TOP_BAR_H = 40;
 export const Z = {
   topBar: 200,
   liveRequests: 100,
-  graphing: 101,
+  recommendations: 101,
+  graphing: 102,
   tabBar: 100,
 };
 

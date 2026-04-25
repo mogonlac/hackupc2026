@@ -363,13 +363,31 @@ function createSlackApp() {
       await client.reactions.add({ channel: message.channel, timestamp: message.ts, name: 'eyes' });
     } catch { /* reaction already added or missing scope — non-fatal */ }
 
+    // Resolve <@USERID> mentions to real names so Gemini can extract assignee_name.
+    // Check registry first (free), fall back to users.info for unknown IDs.
+    let resolvedText = message.text || '';
+    const mentionIds = [...resolvedText.matchAll(/<@(\w+)>/g)].map(m => m[1]);
+    for (const uid of mentionIds) {
+      let name = router.findBySlackId(uid)?.name || null;
+      if (!name) {
+        try {
+          const info = await client.users.info({ user: uid });
+          name = info.user?.real_name || info.user?.profile?.display_name || uid;
+        } catch { name = uid; }
+      }
+      resolvedText = resolvedText.replace(new RegExp(`<@${uid}>`, 'g'), name);
+    }
+    if (resolvedText !== message.text) {
+      console.log(`[slack] resolved mentions: "${resolvedText}"`);
+    }
+
     // Parse with Gemini — retry once on transient errors.
     let parsed;
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        console.log(`[gemini] parseRequest attempt ${attempt} for "${message.text}"`);
+        console.log(`[gemini] parseRequest attempt ${attempt} for "${resolvedText}"`);
         const t0 = Date.now();
-        parsed = await parseRequest(message.text || '');
+        parsed = await parseRequest(resolvedText);
         console.log(`[gemini] done in ${Date.now() - t0}ms →`, JSON.stringify(parsed));
         break;
       } catch (err) {
@@ -380,12 +398,33 @@ function createSlackApp() {
           await say({ text: `❌ Could not parse your request: ${err.message}`, thread_ts: message.ts });
           return;
         }
+        // (fall through to retry)
         await new Promise(r => setTimeout(r, 1500));
       }
     }
 
-    // Auto-route to least loaded person in the target team.
-    const assignee     = router.route(parsed.team);
+    // If the request names a specific person, route directly to them.
+    // Otherwise fall back to least-loaded person in the target team.
+    let assignee = null;
+    let namedButMissing = false;
+    if (parsed.assignee_name) {
+      assignee = router.findByName(parsed.assignee_name);
+      if (assignee) {
+        console.log(`[router] named assignee "${parsed.assignee_name}" → ${assignee.name} (${assignee.memberId})`);
+      } else {
+        console.log(`[router] named assignee "${parsed.assignee_name}" not found in registry — they need to be onboarded first`);
+        namedButMissing = true;
+      }
+    }
+    if (!assignee) {
+      assignee = router.route(parsed.team, chInfo.slackUserId, member.team);
+    }
+    if (namedButMissing) {
+      await say({
+        text: `⚠️ *${parsed.assignee_name}* isn't set up yet — onboard them in #employee-onboarding first. Routed to ${assignee?.name || 'unassigned'} in the meantime.`,
+        thread_ts: message.ts,
+      });
+    }
     const assigneeName = assignee?.name || null;
     const deptId       = parsed.team.toLowerCase().replace(/\s+/g, '_');
     console.log(`[router] team=${parsed.team} → assignee=${assigneeName || 'unassigned'} (${assignee?.memberId || '-'})`);
