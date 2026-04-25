@@ -78,7 +78,7 @@ const ProvideContentBase = styled.div`
   padding: 0 25px;
 `;
 
-const ProvideContentFood = styled(ProvideContentBase)`
+const ProvideContentCalories = styled(ProvideContentBase)`
   top: 18%;
   left: 7%;
   right: 7%;
@@ -169,15 +169,15 @@ export default function Provide() {
         </ProvideHeader>
         <ProvideWrapper>
           <ProvideCard>
-            <ProvideBackground src="/Provide/food.svg" alt="Food" />
-            <ProvideContentFood>
+            <ProvideBackground src="/Provide/calories.svg" alt="Calories" />
+            <ProvideContentCalories>
               <ProvideBody className={montserrat.className}>
                 We've got you covered, we even have midnight snacks. Throughout
                 the event there will be snacks, drinks, and coffee to revive
                 your energy.
               </ProvideBody>
-            </ProvideContentFood>
-            <ProvideLabel className={montserrat.className}>Food</ProvideLabel>
+            </ProvideContentCalories>
+            <ProvideLabel className={montserrat.className}>Calories</ProvideLabel>
           </ProvideCard>
 
           <ProvideCard>
