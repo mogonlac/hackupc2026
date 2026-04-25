@@ -1,0 +1,35 @@
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  /* Prevents horizontal scrollbar */
+  scroll-behavior: smooth;
+}
+
+body {
+  color: black;
+  background-color: #cac9c9;
+  background-image: url("/maons.svg");
+  background-repeat: repeat;
+
+  @media (min-width: 2300px) {
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: cover;
+  }
+
+  @media (max-width: 640px) {
+    background-image: url("/maons_mobile.svg");
+  }
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
