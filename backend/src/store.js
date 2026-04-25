@@ -18,11 +18,13 @@ function ensureDir() {
 
 function load() {
   ensureDir();
-  if (!fs.existsSync(DB_FILE)) return { departments: [] };
+  if (!fs.existsSync(DB_FILE)) return { departments: [], people: [] };
   try {
-    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    const parsed = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    if (!Array.isArray(parsed.people)) parsed.people = [];
+    return parsed;
   } catch {
-    return { departments: [] };
+    return { departments: [], people: [] };
   }
 }
 
@@ -104,4 +106,66 @@ function getSnapshot() {
   return JSON.parse(JSON.stringify(db));
 }
 
-module.exports = { upsertRequest, resolveRequest, getSnapshot, upsertMember, upsertDept };
+function getRequestById(requestId) {
+  for (const dept of db.departments) {
+    for (const member of dept.members) {
+      const req = member.requests.find(r => r.id === requestId);
+      if (req) return req;
+    }
+  }
+  return null;
+}
+
+function updateRequest(requestId, patch) {
+  for (const dept of db.departments) {
+    for (const member of dept.members) {
+      const idx = member.requests.findIndex(r => r.id === requestId);
+      if (idx >= 0) {
+        member.requests[idx] = { ...member.requests[idx], ...patch };
+        save(db);
+        return member.requests[idx];
+      }
+    }
+  }
+  return null;
+}
+
+// ─── people directory ───────────────────────────────────────────────────────
+//
+// A flat list of everyone the bot knows about, keyed by their internal
+// memberId (which embeds the Slack user id). Future request-building can
+// look people up here without traversing departments → members.
+
+function upsertPerson({ id, name, position, department, slackUserId }) {
+  if (!id) throw new Error('upsertPerson requires id');
+  let person = db.people.find(p => p.id === id);
+  if (!person) {
+    person = { id, name, position, department, slackUserId };
+    db.people.push(person);
+  } else {
+    if (name !== undefined) person.name = name;
+    if (position !== undefined) person.position = position;
+    if (department !== undefined) person.department = department;
+    if (slackUserId !== undefined) person.slackUserId = slackUserId;
+  }
+  save(db);
+  return person;
+}
+
+function getPerson(id) {
+  return db.people.find(p => p.id === id) ?? null;
+}
+
+function findPersonBySlackId(slackUserId) {
+  return db.people.find(p => p.slackUserId === slackUserId) ?? null;
+}
+
+function listPeople() {
+  return [...db.people];
+}
+
+module.exports = {
+  upsertRequest, resolveRequest, getSnapshot, upsertMember, upsertDept,
+  upsertPerson, getPerson, findPersonBySlackId, listPeople,
+  getRequestById, updateRequest,
+};

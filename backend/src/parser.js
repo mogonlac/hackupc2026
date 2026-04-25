@@ -65,4 +65,48 @@ async function parseRequest(messageText) {
   };
 }
 
-module.exports = { parseRequest, TEAMS };
+const ONBOARDING_SYSTEM = `You are an HR onboarding assistant.
+
+Given a message that introduces or onboards a new employee, extract their role and department.
+
+Return ONLY valid JSON — no markdown, no explanation.
+
+{
+  "role": string,   // their job title, e.g. "Marketing Head", "Senior Engineer", "Sales Manager"
+  "team": string    // which team they belong to — must be one of: ${TEAMS.join(', ')}
+}
+
+Team routing guide:
+- Sales       → sales, account, revenue, business development, partnerships
+- Engineering → engineer, developer, tech, infrastructure, backend, frontend, fullstack
+- Operations  → ops, operations, logistics, procurement, finance, admin
+- Data Science → data, analytics, scientist, ML, AI, insights
+- Marketing   → marketing, brand, content, social, growth, campaigns
+- Product     → product, design, UX, UI, PM, roadmap
+
+Examples:
+"Alice is the new marketing head"
+→ { "role": "Marketing Head", "team": "Marketing" }
+
+"Bob joined as senior engineer"
+→ { "role": "Senior Engineer", "team": "Engineering" }`;
+
+async function parseOnboarding(messageText) {
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    config: {
+      thinkingConfig: { thinkingBudget: 0 },
+      responseMimeType: 'application/json',
+      systemInstruction: ONBOARDING_SYSTEM,
+    },
+    contents: [{ role: 'user', parts: [{ text: messageText }] }],
+  });
+
+  const data = JSON.parse(response.text.trim());
+  return {
+    role: data.role || 'Team Member',
+    team: TEAMS.includes(data.team) ? data.team : 'Operations',
+  };
+}
+
+module.exports = { parseRequest, parseOnboarding, TEAMS };

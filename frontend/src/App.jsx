@@ -13,6 +13,7 @@ import AttentionView from './components/AttentionView';
 import TabBar from './components/TabBar';
 import LiveRequestsPanel from './components/LiveRequestsPanel';
 import GraphingPanel from './components/GraphingPanel';
+import slapHand from './assets/slap-hand.png';
 
 export default function App() {
   /* "now" only ticks once a minute and is the SINGLE source of truth across the app
@@ -132,7 +133,13 @@ export default function App() {
         position: 'sticky', top: 0, zIndex: Z.topBar,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ fontWeight: 800, fontSize: 15, letterSpacing: '0.12em' }}>SLAP</span>
+          <img
+            src={slapHand}
+            alt="SLAP"
+            width={36}
+            height={36}
+            style={{ display: 'block', width: 36, height: 36, imageRendering: 'pixelated' }}
+          />
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               type="button"

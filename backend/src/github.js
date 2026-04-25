@@ -30,7 +30,9 @@ async function readRepoFiles() {
   });
 
   const textFiles = tree.tree.filter(f =>
-    f.type === 'blob' && /\.(html|css|js|json|md|txt)$/i.test(f.path),
+    f.type === 'blob' &&
+    f.path.startsWith('demo/') &&
+    /\.(html|css|js|json|md|txt)$/i.test(f.path),
   );
 
   const files = await Promise.all(textFiles.map(async (f) => {

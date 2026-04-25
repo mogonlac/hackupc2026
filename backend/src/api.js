@@ -11,15 +11,12 @@
 const express = require('express');
 const cors = require('cors');
 const store = require('./store');
-// slack.js is intentionally minimal right now — no member map needed yet
+const appRouter = require('./router');
 
 const router = express.Router();
 
-// In-memory member map (slackUserId → member info).
-// Persisted only while the process is running; seed it on startup if needed.
+// In-memory member map for the GET /api/members listing
 let memberMapRaw = {};
-
-function rebuildMemberMap() { /* no-op for now */ }
 
 // ── GET /api/snapshot ────────────────────────────────────────────────────────
 router.get('/snapshot', (req, res) => {
@@ -28,7 +25,7 @@ router.get('/snapshot', (req, res) => {
 
 // ── GET /api/members ─────────────────────────────────────────────────────────
 router.get('/members', (req, res) => {
-  res.json(memberMapRaw);
+  res.json(appRouter.getAll());
 });
 
 /**
@@ -42,7 +39,7 @@ router.post('/members', express.json(), (req, res) => {
   }
   memberMapRaw[slackUserId] = { memberId, memberName, deptId, deptName, role };
   store.upsertMember(deptId, deptName, memberId, memberName, role);
-  rebuildMemberMap();
+  appRouter.register(slackUserId, { memberId, name: memberName, team: deptName, role });
   res.json({ ok: true, mapping: memberMapRaw[slackUserId] });
 });
 
