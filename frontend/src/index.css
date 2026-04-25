@@ -1,0 +1,40 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  color: #111;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+table {
+  border-spacing: 0;
+}
+
+button {
+  font-family: inherit;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+input:focus-visible {
+  outline: 2px solid #1a6fc4;
+  outline-offset: 1px;
+}
+
+::selection {
+  background: rgba(26, 111, 196, 0.25);
+}

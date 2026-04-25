@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+backend/data/
+hackupc-2026-clone/
+*.local
+.vite/
