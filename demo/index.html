@@ -3,589 +3,294 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Arc North — Sant Jordi edition (roses, books &amp; builds)</title>
+  <title>Arc North — we build the thing</title>
   <style>
-    /* Sticker layout · paleta rojo, verde, amarillo y azul. */
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-
     :root {
+      --yellow: #facc15;
+      --yellow-dark: #eab308;
+      --blue: #1e3a8a;
+      --blue-mid: #2563eb;
+      --red: #b91c1c;
+      --green: #15803d;
+      --cream: #fffbeb;
+      --ink: #0f172a;
+      --shadow: 4px 4px 0 var(--ink);
+      --shadow-lg: 6px 6px 0 var(--ink);
       font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
     }
 
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-    }
+    *, *::before, *::after { box-sizing: border-box; }
 
-    html {
-      scroll-behavior: smooth;
-    }
+    html { scroll-behavior: smooth; }
 
     body {
       margin: 0;
       min-height: 100dvh;
+      background: var(--yellow);
+      color: var(--ink);
     }
 
-    .app {
-      min-height: 100dvh;
-      position: relative;
+    /* ── scanline texture ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
     }
 
-    /* Default: clean off-white */
-    .surface {
-      --ink: #0f172a;
-      --page: #f8fafc;
-      --card: #ffffff;
-      --text: #0f172a;
-      --text-muted: #475569;
-      --accent-a: #dc2626;
-      --accent-b: #16a34a;
-      --accent-c: #3b82f6;
-      --bar: #ffffff;
-      --shadow: 4px 4px 0 var(--ink);
-      --shadow-sm: 3px 3px 0 var(--ink);
-      min-height: 100dvh;
-      color: var(--text);
-      background: var(--page);
-      transition: background 0.2s ease, color 0.2s ease;
-    }
-
-    /* Nit de llibres — fondo azul oscuro, acentos los cuatro colores */
-    #theme-terminal:checked ~ .surface {
-      --page: #0c1929;
-      --card: #152a45;
-      --ink: #fef08a;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --accent-a: #f87171;
-      --accent-b: #4ade80;
-      --accent-c: #60a5fa;
-      --bar: #1e3a8a;
-      --shadow: 4px 4px 0 #020617;
-      --shadow-sm: 3px 3px 0 #020617;
-    }
-
-    /* Rosa — fondo rojo muy suave */
-    #theme-dusk:checked ~ .surface {
-      --page: #ffe4e6;
-      --card: #fff1f2;
-      --ink: #7f1d1d;
-      --text: #450a0a;
-      --text-muted: #991b1b;
-      --accent-a: #dc2626;
-      --accent-b: #15803d;
-      --accent-c: #1d4ed8;
-      --bar: #fef08a;
-    }
-
-    /* Drac — fondo verde claro */
-    #theme-arena:checked ~ .surface {
-      --page: #dcfce7;
-      --card: #f0fdf4;
-      --ink: #14532d;
-      --text: #14532d;
-      --text-muted: #166534;
-      --accent-a: #dc2626;
-      --accent-b: #15803d;
-      --accent-c: #2563eb;
-      --bar: #fef08a;
-    }
-
-    /* Senyera — amarillo fuerte + rojo, toques verde y azul */
-    #theme-cortado:checked ~ .surface {
-      --page: #facc15;
-      --card: #fffbeb;
-      --ink: #1e3a8a;
-      --text: #0f172a;
-      --text-muted: #1e40af;
-      --accent-a: #b91c1c;
-      --accent-b: #15803d;
-      --accent-c: #1d4ed8;
-      --bar: #93c5fd;
-    }
-
-    /* Show blobs + stripes only on fun themes */
-    #theme-cortado:checked ~ .surface .blob,
-    #theme-arena:checked ~ .surface .blob,
-    #theme-dusk:checked ~ .surface .blob,
-    #theme-terminal:checked ~ .surface .blob { display: block; }
-
-    #theme-cortado:checked ~ .surface .stripe-layer { opacity: 0.32; }
-    #theme-arena:checked ~ .surface .stripe-layer { opacity: 0.25; }
-    #theme-dusk:checked ~ .surface .stripe-layer { opacity: 0.25; }
-    #theme-terminal:checked ~ .surface .stripe-layer { opacity: 0.2; }
-
-    #turbo-build:checked ~ .surface .blob {
-      animation-duration: 2.5s !important;
-    }
-
-    #turbo-build:checked ~ .surface .stripe-layer {
-      animation-duration: 6s !important;
-    }
-
-    #glyph-motion:checked ~ .surface .logo-mark {
-      animation: wiggle 0.55s ease-in-out infinite;
-    }
-
-    #release-notes:checked ~ .surface .hero-badge::after {
-      content: " · 23 d’abril";
-      font-weight: 800;
-    }
-
-    #release-notes:checked ~ .surface .hero-title .gradient-text {
-      text-decoration: underline wavy var(--accent-a);
-      text-underline-offset: 6px;
-    }
-
-    .prefs-bar {
+    /* ── nav ── */
+    nav.topbar {
       position: sticky;
       top: 0;
       z-index: 20;
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
-      gap: 0.45rem;
-      padding: 0.65rem clamp(0.75rem, 3vw, 1.15rem);
-      background: var(--bar);
-      border-bottom: 1px solid #e2e8f0;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    }
-
-    #theme-cortado:checked ~ .surface .prefs-bar,
-    #theme-arena:checked ~ .surface .prefs-bar,
-    #theme-dusk:checked ~ .surface .prefs-bar,
-    #theme-terminal:checked ~ .surface .prefs-bar {
-      border-bottom: 3px solid var(--ink);
+      gap: 1.5rem;
+      padding: 0.7rem clamp(1rem, 4vw, 2rem);
+      background: var(--blue);
+      border-bottom: 4px solid var(--ink);
       box-shadow: 0 4px 0 var(--ink);
     }
 
-    .prefs-bar .brand {
-      font-size: 1.05rem;
-      font-weight: 800;
+    nav.topbar .brand {
+      font-size: 1rem;
+      font-weight: 900;
       letter-spacing: -0.03em;
-      color: var(--ink);
+      color: var(--yellow);
       text-decoration: none;
-      margin-right: 0.25rem;
+      text-transform: uppercase;
     }
 
-    .prefs-bar nav {
+    nav.topbar .brand span {
+      color: var(--red);
+      font-style: italic;
+    }
+
+    nav.topbar .links {
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem 0.75rem;
-      align-items: center;
+      gap: 1.25rem;
+      margin-left: 0.5rem;
     }
 
-    .prefs-bar nav a {
-      font-size: 0.82rem;
-      color: var(--ink);
-      text-decoration: none;
+    nav.topbar .links a {
+      font-size: 0.78rem;
       font-weight: 700;
-      border-bottom: 2px solid transparent;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
 
-    .prefs-bar nav a:hover {
-      border-bottom-color: var(--accent-a);
-    }
+    nav.topbar .links a:hover { color: var(--yellow); }
 
-    .prefs-label {
-      font-size: 0.62rem;
+    nav.topbar .badge {
+      margin-left: auto;
+      font-size: 0.6rem;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: var(--ink);
-      opacity: 0.75;
-      margin-left: 0.35rem;
-      margin-right: 0.1rem;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.35rem 0.7rem;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 800;
-      cursor: pointer;
+      color: var(--blue);
+      background: var(--yellow);
       border: 2px solid var(--ink);
-      background: var(--card);
-      color: var(--ink);
-      box-shadow: var(--shadow-sm);
-      user-select: none;
-      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      padding: 0.25rem 0.6rem;
+      border-radius: 3px;
     }
 
-    .pill:hover {
-      transform: translate(-1px, -1px);
-      box-shadow: 5px 5px 0 var(--ink);
-    }
-
-    .pill:active {
-      transform: translate(2px, 2px);
-      box-shadow: 1px 1px 0 var(--ink);
-    }
-
-    #theme-terminal:checked ~ .surface .prefs-bar label[for="theme-terminal"],
-    #theme-dusk:checked ~ .surface .prefs-bar label[for="theme-dusk"],
-    #theme-arena:checked ~ .surface .prefs-bar label[for="theme-arena"],
-    #theme-cortado:checked ~ .surface .prefs-bar label[for="theme-cortado"] {
-      background: var(--accent-c);
-      color: var(--ink);
-    }
-
-    #turbo-build:checked ~ .surface .prefs-bar label[for="turbo-build"],
-    #glyph-motion:checked ~ .surface .prefs-bar label[for="glyph-motion"],
-    #release-notes:checked ~ .surface .prefs-bar label[for="release-notes"] {
-      background: var(--accent-b);
-      color: var(--ink);
-    }
-
-    .prefs-bar .spacer {
-      flex: 1;
-      min-width: 0.4rem;
-    }
-
-    .prefs-hint {
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: var(--ink);
-      opacity: 0.65;
-      max-width: 14rem;
-      line-height: 1.25;
-    }
-
-    .scene {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
+    /* ── ticker ── */
+    .ticker-wrap {
       overflow: hidden;
+      background: var(--red);
+      border-bottom: 3px solid var(--ink);
+      padding: 0.3rem 0;
     }
 
-    .stripe-layer {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      background: repeating-linear-gradient(
-        90deg,
-        rgba(220, 38, 38, 0.14) 0,
-        rgba(220, 38, 38, 0.14) 18px,
-        rgba(22, 163, 74, 0.12) 18px,
-        rgba(22, 163, 74, 0.12) 36px,
-        rgba(234, 179, 8, 0.14) 36px,
-        rgba(234, 179, 8, 0.14) 54px,
-        rgba(37, 99, 235, 0.1) 54px,
-        rgba(37, 99, 235, 0.1) 72px
-      );
-      animation: stripe-slide 24s linear infinite;
-    }
-
-    @keyframes stripe-slide {
-      to { background-position: 120px 0; }
-    }
-
-    #theme-terminal:checked ~ .surface .stripe-layer {
-      opacity: 0.2;
-      background: repeating-linear-gradient(
-        -11deg,
-        rgba(248, 113, 113, 0.12) 0,
-        rgba(248, 113, 113, 0.12) 14px,
-        rgba(74, 222, 128, 0.1) 14px,
-        rgba(74, 222, 128, 0.1) 28px,
-        rgba(250, 204, 21, 0.1) 28px,
-        rgba(250, 204, 21, 0.1) 42px,
-        rgba(96, 165, 250, 0.12) 42px,
-        rgba(96, 165, 250, 0.12) 56px
-      );
-    }
-
-    #theme-dusk:checked ~ .surface .stripe-layer {
-      background: repeating-linear-gradient(
-        90deg,
-        rgba(220, 38, 38, 0.16) 0,
-        rgba(220, 38, 38, 0.16) 20px,
-        rgba(22, 163, 74, 0.1) 20px,
-        rgba(22, 163, 74, 0.1) 38px,
-        rgba(234, 179, 8, 0.12) 38px,
-        rgba(234, 179, 8, 0.12) 56px,
-        rgba(37, 99, 235, 0.1) 56px,
-        rgba(37, 99, 235, 0.1) 74px
-      );
-    }
-
-    #theme-arena:checked ~ .surface .stripe-layer {
-      background: repeating-linear-gradient(
-        92deg,
-        rgba(22, 163, 74, 0.15) 0,
-        rgba(22, 163, 74, 0.15) 18px,
-        rgba(220, 38, 38, 0.1) 18px,
-        rgba(220, 38, 38, 0.1) 36px,
-        rgba(234, 179, 8, 0.12) 36px,
-        rgba(234, 179, 8, 0.12) 54px,
-        rgba(37, 99, 235, 0.1) 54px,
-        rgba(37, 99, 235, 0.1) 72px
-      );
-    }
-
-    #theme-cortado:checked ~ .surface .stripe-layer {
-      opacity: 0.32;
-      background: repeating-linear-gradient(
-        90deg,
-        rgba(234, 179, 8, 0.22) 0,
-        rgba(234, 179, 8, 0.22) 16px,
-        rgba(185, 28, 28, 0.18) 16px,
-        rgba(185, 28, 28, 0.18) 32px,
-        rgba(22, 101, 52, 0.12) 32px,
-        rgba(22, 101, 52, 0.12) 48px,
-        rgba(30, 64, 175, 0.14) 48px,
-        rgba(30, 64, 175, 0.14) 64px
-      );
-    }
-
-    .blob {
-      position: absolute;
-      border-radius: 50%;
-      border: 3px solid var(--ink);
-      animation: blob-bob 14s ease-in-out infinite;
-      display: none;
-    }
-
-    .blob-a {
-      width: 120px;
-      height: 120px;
-      background: var(--accent-a);
-      top: 12%;
-      right: 8%;
-      animation-delay: 0s;
-    }
-
-    .blob-b {
-      width: 80px;
-      height: 80px;
-      background: var(--accent-b);
-      bottom: 18%;
-      left: 6%;
-      animation-delay: -3s;
-    }
-
-    .blob-c {
-      width: 56px;
-      height: 56px;
-      background: var(--accent-c);
-      top: 42%;
-      left: 18%;
-      animation-delay: -6s;
-    }
-
-    @keyframes blob-bob {
-      0%, 100% { transform: translate(0, 0) rotate(0deg); }
-      50% { transform: translate(8px, -12px) rotate(8deg); }
-    }
-
-    main {
-      position: relative;
-      z-index: 1;
-      max-width: 56rem;
-      margin: 0 auto;
-      padding: clamp(1.1rem, 4vw, 2rem);
-      padding-top: clamp(1.5rem, 5vh, 2.25rem);
-    }
-
-    .hero-badge {
-      display: inline-block;
-      font-size: 0.68rem;
+    .ticker {
+      display: flex;
+      gap: 3rem;
+      white-space: nowrap;
+      animation: tick 22s linear infinite;
+      font-size: 0.7rem;
       font-weight: 800;
-      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--ink);
+      letter-spacing: 0.08em;
+      color: var(--cream);
+    }
+
+    @keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* ── main layout ── */
+    main {
+      max-width: 58rem;
+      margin: 0 auto;
+      padding: clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 2rem);
+    }
+
+    /* ── hero ── */
+    .hero {
+      margin-bottom: 3rem;
+    }
+
+    .hero-stamp {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cream);
+      background: var(--red);
       border: 2px solid var(--ink);
-      padding: 0.4rem 0.75rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      background: var(--accent-c);
-      box-shadow: var(--shadow-sm);
-      transform: rotate(-2deg);
+      padding: 0.35rem 0.8rem;
+      border-radius: 3px;
+      box-shadow: var(--shadow-sm, 3px 3px 0 var(--ink));
+      margin-bottom: 1.1rem;
+      transform: rotate(-1.5deg);
+      display: inline-block;
     }
 
-    .hero-title {
-      margin: 0 0 0.65rem;
-      font-size: clamp(1.85rem, 6vw, 2.85rem);
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-      color: var(--text);
+    .hero h1 {
+      margin: 0 0 0.75rem;
+      font-size: clamp(2rem, 6.5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      color: var(--blue);
+      text-shadow: 3px 3px 0 var(--ink);
     }
 
-    .gradient-text {
-      color: var(--accent-a);
-      text-shadow: 2px 2px 0 var(--ink);
+    .hero h1 em {
+      font-style: normal;
+      color: var(--red);
     }
 
-    .hero-lede {
-      margin: 0 0 1.35rem;
+    .hero p {
+      margin: 0 0 1.5rem;
       font-size: 1.05rem;
-      color: var(--text-muted);
-      line-height: 1.55;
-      max-width: 48ch;
+      line-height: 1.6;
+      color: var(--ink);
+      max-width: 46ch;
       font-weight: 600;
     }
 
-    .hero-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.75rem;
-    }
-
-    .logo-wrap {
-      width: 4.5rem;
-      height: 4.5rem;
+    .divider {
       display: flex;
       align-items: center;
-      justify-content: center;
-      background: var(--card);
-      border: 3px solid var(--ink);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-      transform: rotate(-6deg);
+      gap: 0.6rem;
+      margin: 2.5rem 0;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--blue);
     }
 
-    .logo-mark {
-      font-size: 2.25rem;
-      line-height: 1;
-      transform-origin: center;
-    }
-
-    @keyframes wiggle {
-      0%, 100% { transform: rotate(-8deg); }
-      50% { transform: rotate(8deg); }
-    }
-
-    .hero-aside {
+    .divider::before, .divider::after {
+      content: '';
       flex: 1;
-      min-width: 12rem;
-      font-size: 0.88rem;
-      color: var(--text-muted);
-      line-height: 1.45;
-      font-weight: 600;
+      height: 3px;
+      background: var(--ink);
     }
 
-    .hero-aside strong {
-      color: var(--text);
-    }
-
+    /* ── buttons ── */
     .btn-row {
       display: flex;
       flex-wrap: wrap;
       gap: 0.75rem;
-      margin-bottom: 1.75rem;
+      margin-bottom: 2rem;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
-      padding: 0.75rem 1.15rem;
-      border-radius: 10px;
-      font-weight: 800;
-      font-size: 0.9rem;
+      gap: 0.4rem;
+      padding: 0.8rem 1.25rem;
+      font-weight: 900;
+      font-size: 0.88rem;
       text-decoration: none;
       border: 3px solid var(--ink);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      border-radius: 6px;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
-    .btn:active {
-      transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0 var(--ink) !important;
-    }
+    .btn:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-lg); }
+    .btn:active { transform: translate(2px,2px); box-shadow: none; }
 
-    .btn-primary {
-      color: var(--ink);
-      background: var(--accent-a);
-      box-shadow: var(--shadow);
-    }
+    .btn-a { background: var(--red); color: var(--cream); box-shadow: var(--shadow); }
+    .btn-b { background: var(--cream); color: var(--ink); box-shadow: var(--shadow); }
 
-    .btn-primary:hover {
-      transform: translate(-2px, -2px);
-      box-shadow: 6px 6px 0 var(--ink);
-    }
-
-    .btn-quiet {
-      color: var(--ink);
-      background: var(--card);
-      box-shadow: var(--shadow);
-    }
-
-    .btn-quiet:hover {
-      transform: translate(-2px, -2px);
-      box-shadow: 6px 6px 0 var(--ink);
-    }
-
-    .tech-strip {
+    /* ── feature strip ── */
+    .feature-strip {
       display: flex;
       flex-wrap: wrap;
-      align-items: center;
-      gap: 0.5rem 0.65rem;
-      margin-bottom: 2.25rem;
-      padding: 1rem 1.1rem;
-      border-radius: 12px;
-      border: 3px solid var(--ink);
-      background: var(--card);
-      box-shadow: var(--shadow);
-      transform: rotate(0.5deg);
-    }
-
-    .tech-strip span.intro {
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      width: 100%;
-      margin-bottom: 0.1rem;
-    }
-
-    .tech-strip .tag {
-      font-size: 0.74rem;
-      font-weight: 800;
-      color: var(--ink);
-      padding: 0.3rem 0.55rem;
-      border-radius: 8px;
-      border: 2px solid var(--ink);
-      background: var(--accent-b);
-      box-shadow: 2px 2px 0 var(--ink);
-    }
-
-    section.block {
+      gap: 0.5rem;
       margin-bottom: 2.5rem;
+      padding: 1rem 1.2rem;
+      background: var(--cream);
+      border: 3px solid var(--ink);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      transform: rotate(0.4deg);
     }
 
-    section.block h2 {
-      margin: 0 0 0.35rem;
-      font-size: 1.4rem;
+    .feature-strip .intro {
+      width: 100%;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.2rem;
+    }
+
+    .tag {
+      font-size: 0.72rem;
       font-weight: 800;
-      letter-spacing: -0.02em;
-      display: inline-block;
-      border-bottom: 4px solid var(--accent-a);
+      color: var(--cream);
+      background: var(--blue);
+      border: 2px solid var(--ink);
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      box-shadow: 2px 2px 0 var(--ink);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
-    section.block .sub {
-      margin: 0.5rem 0 1.15rem;
-      color: var(--text-muted);
+    /* ── section ── */
+    section {
+      margin-bottom: 3rem;
+    }
+
+    section h2 {
+      margin: 0 0 0.4rem;
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--blue);
+      text-transform: uppercase;
+      display: inline-block;
+      border-bottom: 4px solid var(--red);
+      padding-bottom: 2px;
+    }
+
+    section .sub {
+      margin: 0.5rem 0 1.25rem;
       font-size: 0.95rem;
-      max-width: 52ch;
-      line-height: 1.5;
+      color: var(--ink);
+      max-width: 50ch;
+      line-height: 1.55;
       font-weight: 600;
     }
 
+    /* ── cards ── */
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -593,46 +298,38 @@
     }
 
     .card {
-      border-radius: 14px;
       border: 3px solid var(--ink);
-      background: var(--card);
-      padding: 1.1rem 1.15rem;
+      border-radius: 10px;
+      background: var(--cream);
+      padding: 1.2rem 1.25rem;
       box-shadow: var(--shadow);
-      transition: transform 0.2s ease;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .card:nth-child(odd) {
-      transform: rotate(-0.8deg);
-    }
+    .card:nth-child(odd) { transform: rotate(-0.6deg); }
+    .card:nth-child(even) { transform: rotate(0.6deg); }
+    .card:hover { transform: rotate(0) translate(-3px,-3px) !important; box-shadow: var(--shadow-lg); }
 
-    .card:nth-child(even) {
-      transform: rotate(0.8deg);
-    }
-
-    .card:hover {
-      transform: rotate(0deg) translate(-3px, -3px) !important;
-      box-shadow: 7px 7px 0 var(--ink);
-    }
-
-    .card .icon {
-      font-size: 1.4rem;
-      margin-bottom: 0.5rem;
-    }
+    .card .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
 
     .card h3 {
-      margin: 0 0 0.35rem;
-      font-size: 1rem;
-      font-weight: 800;
+      margin: 0 0 0.4rem;
+      font-size: 0.95rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: var(--blue);
     }
 
     .card p {
       margin: 0;
       font-size: 0.86rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.55;
+      font-weight: 500;
     }
 
+    /* ── stats ── */
     .stats {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -640,306 +337,372 @@
     }
 
     .stat {
-      border-radius: 12px;
       border: 3px dashed var(--ink);
-      padding: 0.85rem 0.95rem;
-      background: var(--card);
-      box-shadow: var(--shadow-sm);
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      background: var(--cream);
+      box-shadow: 3px 3px 0 var(--ink);
     }
 
     .stat b {
       display: block;
-      font-size: 1.35rem;
-      font-weight: 800;
-      color: var(--accent-a);
-      letter-spacing: -0.02em;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--red);
+      letter-spacing: -0.03em;
     }
 
     .stat span {
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       font-weight: 600;
-      color: var(--text-muted);
+      color: var(--blue);
       line-height: 1.35;
     }
 
-    .quote-list {
+    /* ── team ── */
+    .team-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .team-card {
+      border: 3px solid var(--ink);
+      border-radius: 10px;
+      background: var(--blue);
+      padding: 1.2rem;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s ease;
+    }
+
+    .team-card:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-lg); }
+
+    .team-card .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--yellow);
+      background: var(--yellow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .team-card h3 {
+      margin: 0 0 0.2rem;
+      font-size: 0.92rem;
+      font-weight: 900;
+      color: var(--yellow);
+    }
+
+    .team-card .role {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 0.5rem;
+    }
+
+    .team-card p {
+      margin: 0;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.5;
+    }
+
+    /* ── quotes ── */
+    .quotes {
       display: grid;
       gap: 0.85rem;
     }
 
     blockquote {
       margin: 0;
-      border-radius: 14px;
       border: 3px solid var(--ink);
-      background: var(--card);
-      padding: 1rem 1.1rem;
-      font-size: 0.86rem;
-      line-height: 1.5;
-      color: var(--text-muted);
+      border-radius: 10px;
+      background: var(--cream);
+      padding: 1.1rem 1.25rem 1.1rem 2rem;
       box-shadow: var(--shadow);
-      font-weight: 600;
       position: relative;
+      font-size: 0.88rem;
     }
 
     blockquote::before {
-      content: "“";
+      content: '\201C';
       position: absolute;
       top: 0.2rem;
-      left: 0.6rem;
-      font-size: 2.5rem;
+      left: 0.55rem;
+      font-size: 2.8rem;
       line-height: 1;
-      color: var(--accent-c);
-      font-weight: 800;
-      opacity: 0.7;
+      color: var(--red);
+      font-weight: 900;
+      opacity: 0.6;
     }
 
-    blockquote p {
-      margin: 0 0 0.45rem;
-      padding-left: 0.5rem;
-      color: var(--text);
-      font-style: italic;
-      font-weight: 600;
-    }
+    blockquote p { margin: 0 0 0.4rem; font-style: italic; font-weight: 600; line-height: 1.5; color: var(--ink); }
+    blockquote footer { font-size: 0.72rem; font-weight: 700; color: var(--blue); }
 
-    blockquote footer {
-      font-size: 0.76rem;
-      color: var(--text-muted);
-      font-style: normal;
-      font-weight: 700;
-      padding-left: 0.5rem;
-    }
-
+    /* ── contact ── */
     .contact-box {
-      border-radius: 16px;
       border: 3px solid var(--ink);
-      background: var(--accent-c);
-      padding: 1.35rem 1.5rem;
+      border-radius: 12px;
+      background: var(--blue);
+      padding: 1.75rem 2rem;
       text-align: center;
-      box-shadow: var(--shadow);
-      transform: rotate(-1deg);
+      box-shadow: var(--shadow-lg);
+      transform: rotate(-0.5deg);
     }
 
     .contact-box p {
-      margin: 0 0 0.65rem;
-      color: var(--ink);
+      margin: 0 0 0.75rem;
+      color: rgba(255,255,255,0.85);
       font-size: 0.95rem;
-      font-weight: 700;
+      font-weight: 600;
     }
 
     .contact-box .mail {
-      font-weight: 800;
-      color: var(--ink);
-      font-size: 1.08rem;
+      display: inline-block;
+      font-weight: 900;
+      color: var(--yellow);
+      font-size: 1.1rem;
       text-decoration: none;
-      border-bottom: 3px solid var(--ink);
+      border-bottom: 3px solid var(--yellow);
+      letter-spacing: -0.02em;
     }
 
-    .contact-box .mail:hover {
-      background: var(--card);
-    }
+    .contact-box .mail:hover { color: #fff; border-bottom-color: #fff; }
 
+    /* ── footer ── */
     .fine-print {
-      margin-top: 2rem;
-      padding-top: 1.15rem;
+      margin-top: 2.5rem;
+      padding-top: 1rem;
       border-top: 3px dashed var(--ink);
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
-      color: var(--text-muted);
-      line-height: 1.5;
+      color: var(--blue);
       text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ── price list ── */
+    .price-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .price-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.7rem 0.9rem;
+      background: var(--cream);
+      border: 3px solid var(--ink);
+      border-radius: 6px;
+      box-shadow: 3px 3px 0 var(--ink);
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .price-list .price {
+      font-weight: 900;
+      font-size: 1rem;
+      color: var(--red);
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .stripe-layer,
-      .blob,
-      .logo-mark {
-        animation: none !important;
-      }
-
-      .card:nth-child(odd),
-      .card:nth-child(even),
-      .contact-box,
-      .hero-badge,
-      .tech-strip {
-        transform: none;
-      }
-
-      .card:hover {
-        transform: none !important;
-      }
+      .ticker { animation: none; }
+      .card:nth-child(odd), .card:nth-child(even), .contact-box, .hero-stamp, .feature-strip { transform: none; }
+      .card:hover { transform: none !important; }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <input class="sr-only" type="radio" name="theme" id="theme-terminal" />
-    <input class="sr-only" type="radio" name="theme" id="theme-dusk" />
-    <input class="sr-only" type="radio" name="theme" id="theme-arena" />
-    <input class="sr-only" type="radio" name="theme" id="theme-cortado" />
 
-    <input class="sr-only" type="checkbox" id="turbo-build" />
-    <input class="sr-only" type="checkbox" id="glyph-motion" />
-    <input class="sr-only" type="checkbox" id="release-notes" />
+  <nav class="topbar">
+    <a class="brand" href="#top">Arc <span>North</span></a>
+    <div class="links">
+      <a href="#menu">Menu</a>
+      <a href="#about">About</a>
+      <a href="#team">Team</a>
+      <a href="#contact">Contact</a>
+    </div>
+    <span class="badge">Est. 2019 ✦ Barcelona</span>
+  </nav>
 
-    <div class="surface">
-      <header class="prefs-bar">
-        <a class="brand" href="#top">Arc North · Sant Jordi</a>
-        <nav aria-label="Primary">
-          <a href="#services">Services</a>
-          <a href="#stack">Stack</a>
-          <a href="#team">Team</a>
-          <a href="#contact">Contact</a>
-        </nav>
-        <span class="spacer"></span>
-        <span class="prefs-label">Festa</span>
-        <label class="pill" for="theme-terminal">Nit de llibres</label>
-        <label class="pill" for="theme-dusk">Rosa</label>
-        <label class="pill" for="theme-arena">Drac</label>
-        <label class="pill" for="theme-cortado">Senyera</label>
-        <span class="prefs-label">Extra</span>
-        <label class="pill" for="turbo-build">Drac nerviós</label>
-        <label class="pill" for="glyph-motion">Rosa que balla</label>
-        <label class="pill" for="release-notes">23 d’abril</label>
-        <span class="prefs-hint">Themes = roses, dragon, flag colours — still plain HTML/CSS.</span>
-      </header>
-
-      <div class="scene" aria-hidden="true">
-        <div class="stripe-layer"></div>
-        <div class="blob blob-a"></div>
-        <div class="blob blob-b"></div>
-        <div class="blob blob-c"></div>
-      </div>
-
-      <main id="top">
-        <span class="hero-badge">Roses · Books · Shipping code</span>
-        <h1 class="hero-title">
-          Build like it is Sant Jordi:<br />
-          <span class="gradient-text">a rose for polish, a book for the README.</span>
-        </h1>
-        <p class="hero-lede">
-          On 23 April the streets fill with paper, petals, and tall tales of dragons slain with style.
-          We bring that same energy to your backlog: brave UI, brave docs, and fewer “legendary” bugs hiding in the bushes.
-        </p>
-
-        <div class="btn-row">
-          <a class="btn btn-primary" href="#contact">Book 20 minutes (calendar rose optional)</a>
-          <a class="btn btn-quiet" href="#services">What we actually do</a>
-        </div>
-
-        <div class="tech-strip" aria-label="Sant Jordi coordinates">
-          <span class="intro">Vibes we channel when the event is all roses, stalls, and “one more chapter”:</span>
-          <span class="tag">Red accents without drama</span>
-          <span class="tag">Pages that read like a good book</span>
-          <span class="tag">Green builds (dragon-approved)</span>
-          <span class="tag">Yellow optimism, Catalan sunshine</span>
-        </div>
-
-        <section class="block" id="services" aria-labelledby="services-title">
-          <h2 id="services-title">What we actually deliver</h2>
-          <p class="sub">
-            Three chapters, no filler — like a slim volume you finish on the train and still recommend.
-          </p>
-          <div class="cards">
-            <article class="card">
-              <div class="icon" aria-hidden="true">🌹</div>
-              <h3>The rose: craft people notice</h3>
-              <p>Interfaces and APIs with a stem of good taste — thorns only where security needs them.</p>
-            </article>
-            <article class="card">
-              <div class="icon" aria-hidden="true">📖</div>
-              <h3>The book: docs that match reality</h3>
-              <p>README, runbooks, and onboarding that do not read like fan fiction about your own repo.</p>
-            </article>
-            <article class="card">
-              <div class="icon" aria-hidden="true">🐉</div>
-              <h3>The dragon: legacy you tame</h3>
-              <p>We do not promise a single knight in shining armour — we promise smaller fires and clearer exits.</p>
-            </article>
-          </div>
-        </section>
-
-        <section class="block" id="stack" aria-labelledby="stack-title">
-          <h2 id="stack-title">Stats for the back cover</h2>
-          <p class="sub">
-            Blurb-worthy, not fantasy bestseller numbers. Honest enough to sign at a book stall.
-          </p>
-          <div class="stats">
-            <div class="stat">
-              <b>&lt;15 min</b>
-              <span>from “who touched prod” to green CI — faster than choosing which novel to buy next.</span>
-            </div>
-            <div class="stat">
-              <b>3</b>
-              <span>environments: dev, staging, and the scary one with real humans.</span>
-            </div>
-            <div class="stat">
-              <b>92%</b>
-              <span>bugs caught before your users write angry tweets — if tests run and someone reads the warnings.</span>
-            </div>
-            <div class="stat">
-              <b>∞</b>
-              <span>stalls you will walk past thinking “I should ship more often.” We get it.</span>
-            </div>
-          </div>
-        </section>
-
-        <section class="block" id="team" aria-labelledby="team-title">
-          <h2 id="team-title">The cast (no dragons were harmed)</h2>
-          <p class="sub">
-            Spread across time zones; at least one person is awake for DNS emergencies and hot chocolate breaks.
-          </p>
-          <div class="cards">
-            <article class="card">
-              <div class="icon" aria-hidden="true">⌘</div>
-              <h3>Nia Okonkwo</h3>
-              <p>Staff engineer. Stops GraphQL from growing teeth and biting your weekend.</p>
-            </article>
-            <article class="card">
-              <div class="icon" aria-hidden="true">⎔</div>
-              <h3>Tomás Vidal</h3>
-              <p>Mobile lead. Has signed more books than autographs; still refuses sketchy API URLs in demos.</p>
-            </article>
-            <article class="card">
-              <div class="icon" aria-hidden="true">◎</div>
-              <h3>Elena Park</h3>
-              <p>Product + DX. Your README’s editor-in-chief — table of contents included.</p>
-            </article>
-          </div>
-        </section>
-
-        <section class="block" aria-labelledby="voices-title">
-          <h2 id="voices-title">Blurbs for the jacket</h2>
-          <p class="sub">Quotes you could print on a bookmark — lightly edited for spoilers.</p>
-          <div class="quote-list">
-            <blockquote>
-              <p>“They turned our hackathon fairy tale into a chapter that still compiles in August.”</p>
-              <footer>— Lead engineer, fintech pilot</footer>
-            </blockquote>
-            <blockquote>
-              <p>“Our linter stopped yelling. We almost sent them a rose.”</p>
-              <footer>— Platform team, health startup</footer>
-            </blockquote>
-            <blockquote>
-              <p>“We shipped the Sant Jordi energy to production. Sticker budget: justified.”</p>
-              <footer>— CTO, team that chose sleep eventually</footer>
-            </blockquote>
-          </div>
-        </section>
-
-        <section class="block" id="contact" aria-labelledby="contact-title">
-          <h2 id="contact-title" class="sr-only">Contact</h2>
-          <div class="contact-box">
-            <p>Write us a line — dedication optional. Stack traces and rose emojis both accepted.</p>
-            <a class="mail" href="mailto:hello@arcnorth.example">hello@arcnorth.example</a>
-            <p style="margin: 0.75rem 0 0; font-size: 0.82rem;">Bon Sant Jordi · we reply in two business days unless your subject is truly on fire.</p>
-          </div>
-        </section>
-
-        <p class="fine-print">
-          © 2026 Arc North — Sant Jordi edition. Fictional demo page: roses for culture, books for clarity, code for everything else.
-        </p>
-      </main>
+  <div class="ticker-wrap" aria-hidden="true">
+    <div class="ticker">
+      <span>✦ fresh pastries daily</span>
+      <span>✦ sourced local</span>
+      <span>✦ open 7am – 7pm</span>
+      <span>✦ catering available</span>
+      <span>✦ coffee roasted in-house</span>
+      <span>✦ wifi + good vibes</span>
+      <span>✦ fresh pastries daily</span>
+      <span>✦ sourced local</span>
+      <span>✦ open 7am – 7pm</span>
+      <span>✦ catering available</span>
+      <span>✦ coffee roasted in-house</span>
+      <span>✦ wifi + good vibes</span>
     </div>
   </div>
+
+  <main>
+    <div class="hero">
+      <span class="hero-stamp">Bakery &amp; café · Gràcia, BCN</span>
+      <h1>Good bread.<br /><em>No nonsense.</em></h1>
+      <p>
+        We've been making pastries, sandwiches and really strong coffee in the same corner spot since 2019.
+        Nothing on our menu has more than six ingredients. Come in, sit down, stay a while.
+      </p>
+      <div class="btn-row">
+        <a class="btn btn-a" href="#menu">See the menu</a>
+        <a class="btn btn-b" href="#contact">Find us</a>
+      </div>
+      <div class="feature-strip">
+        <span class="intro">What people keep coming back for</span>
+        <span class="tag">Sourdough every morning</span>
+        <span class="tag">€2.50 filter coffee</span>
+        <span class="tag">Lunch from 12</span>
+        <span class="tag">No reservations needed</span>
+      </div>
+    </div>
+
+    <div class="divider">✦ Our menu ✦</div>
+
+    <section id="menu">
+      <h2>Today's prices</h2>
+      <p class="sub">Prices updated regularly. Ask at the counter if something's missing.</p>
+      <ul class="price-list">
+        <li><span>Croissant</span><span class="price">€4.50</span></li>
+        <li><span>Pain au chocolat</span><span class="price">€3.80</span></li>
+        <li><span>Sourdough slice</span><span class="price">€2.00</span></li>
+        <li><span>Avocado toast</span><span class="price">€7.50</span></li>
+        <li><span>Filter coffee</span><span class="price">€2.50</span></li>
+        <li><span>Flat white</span><span class="price">€3.20</span></li>
+        <li><span>Fresh OJ</span><span class="price">€3.50</span></li>
+        <li><span>Bagel + filling</span><span class="price">€6.00</span></li>
+      </ul>
+    </section>
+
+    <div class="divider">✦ Why bother ✦</div>
+
+    <section id="about">
+      <h2>The short version</h2>
+      <p class="sub">We're not trying to be a chain. Just a neighbourhood spot that actually cares.</p>
+      <div class="cards">
+        <article class="card">
+          <div class="icon">🌾</div>
+          <h3>Real ingredients</h3>
+          <p>Everything is made from scratch. Our sourdough starter is older than the business. We don't rush it.</p>
+        </article>
+        <article class="card">
+          <div class="icon">☕</div>
+          <h3>Decent coffee</h3>
+          <p>We roast our own beans with a roaster three streets over. Espresso, filter, cold brew — all solid.</p>
+        </article>
+        <article class="card">
+          <div class="icon">📍</div>
+          <h3>Same spot, always</h3>
+          <p>No pop-ups, no dark kitchens. We're at Carrer de Verdi 14 every single morning. Rain or shine.</p>
+        </article>
+      </div>
+    </section>
+
+    <div class="divider">✦ Numbers ✦</div>
+
+    <section>
+      <h2>A few honest stats</h2>
+      <p class="sub">Nothing inflated. Just what actually happens here on a normal week.</p>
+      <div class="stats">
+        <div class="stat">
+          <b>~340</b>
+          <span>customers through the door on a busy Saturday</span>
+        </div>
+        <div class="stat">
+          <b>6</b>
+          <span>years in the same spot without moving or pivoting</span>
+        </div>
+        <div class="stat">
+          <b>12</b>
+          <span>pastry varieties baked fresh before 8am every day</span>
+        </div>
+        <div class="stat">
+          <b>0</b>
+          <span>loyalty app subscriptions. just come back, that's enough</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider">✦ The team ✦</div>
+
+    <section id="team">
+      <h2>Who's behind the counter</h2>
+      <p class="sub">Small team. Everyone does a bit of everything.</p>
+      <div class="team-cards">
+        <div class="team-card">
+          <div class="avatar">👩‍🍳</div>
+          <h3>Mariona</h3>
+          <div class="role">Head baker</div>
+          <p>Up at 4:30 every morning. Responsible for the croissants everyone argues about.</p>
+        </div>
+        <div class="team-card">
+          <div class="avatar">☕</div>
+          <h3>Pau</h3>
+          <div class="role">Coffee + front of house</div>
+          <p>Knows your order after two visits. Runs the espresso bar like it's a personal mission.</p>
+        </div>
+        <div class="team-card">
+          <div class="avatar">🧾</div>
+          <h3>Laia</h3>
+          <div class="role">Operations</div>
+          <p>Handles suppliers, scheduling and the fact that the dishwasher is always breaking.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider">✦ Word of mouth ✦</div>
+
+    <section>
+      <h2>What regulars say</h2>
+      <p class="sub">Lightly edited. Mostly Google reviews.</p>
+      <div class="quotes">
+        <blockquote>
+          <p>"Been coming here every Tuesday for three years. The croissant is genuinely the best in the neighbourhood and I've tried them all."</p>
+          <footer>— Jaume R., Gràcia local</footer>
+        </blockquote>
+        <blockquote>
+          <p>"Nice place to work for a few hours. Coffee's good, no one rushes you out. Avocado toast is a bit pricey but it's worth it."</p>
+          <footer>— Freelancer leaving a 4-star review</footer>
+        </blockquote>
+        <blockquote>
+          <p>"They finally got oat milk. Only took two years of asking. Still a 5/5."</p>
+          <footer>— Anonymous via Google Maps</footer>
+        </blockquote>
+      </div>
+    </section>
+
+    <div class="divider">✦ Come find us ✦</div>
+
+    <section id="contact">
+      <div class="contact-box">
+        <p>We're at <strong style="color:#fff">Carrer de Verdi 14, Gràcia</strong>. Open Monday to Sunday, 7am to 7pm.</p>
+        <a class="mail" href="mailto:hola@arcnorth.example">hola@arcnorth.example</a>
+        <p style="margin: 0.85rem 0 0; font-size: 0.8rem;">For catering enquiries, give us a couple of days. For everything else, just come in.</p>
+      </div>
+    </section>
+
+    <p class="fine-print">
+      © 2026 Arc North Bakery — Carrer de Verdi 14, Gràcia, Barcelona.<br />
+      Fictional demo site. All prices, people and pastries are illustrative.
+    </p>
+  </main>
+
 </body>
 </html>
