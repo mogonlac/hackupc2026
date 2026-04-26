@@ -27,10 +27,16 @@ export default function App() {
   /* Start with the static illustration data immediately; merge real people from
    * the backend in the background. If the backend is unreachable, nothing breaks. */
   const [rawData, setRawData] = useState(staticDb);
+  const [syncState, setSyncState] = useState(null); // { ok: bool, at: Date }
 
   const refreshData = useCallback(() => {
     fetchSnapshot().then(snap => {
-      if (snap) setRawData(mergeSnapshot(staticDb, snap));
+      if (snap) {
+        setRawData(mergeSnapshot(staticDb, snap));
+        setSyncState({ ok: true, at: new Date() });
+      } else {
+        setSyncState(prev => ({ ok: false, at: prev?.at ?? null }));
+      }
     });
   }, []);
 
@@ -162,11 +168,27 @@ export default function App() {
             </button>
           </div>
         </div>
-        <span
-          title={`Updated ${fmtDateHeader(now)}`}
-          style={{ fontSize: 11, color: COLORS.topBarMuted, fontVariantNumeric: 'tabular-nums' }}
-        >
-          {fmtDateHeader(now)} · live {fmtRelative(now, now)}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, color: COLORS.topBarMuted, fontVariantNumeric: 'tabular-nums' }}>
+            {fmtDateHeader(now)}
+          </span>
+          {syncState === null ? (
+            <span style={{ fontSize: 10, color: COLORS.topBarMuted }}>connecting…</span>
+          ) : syncState.ok ? (
+            <span
+              title={`Last synced ${syncState.at.toLocaleTimeString()}`}
+              style={{ fontSize: 10, color: '#4ade80', fontWeight: 700 }}
+            >
+              ● synced {fmtRelative(syncState.at, now)}
+            </span>
+          ) : (
+            <span
+              title={syncState.at ? `Last synced ${syncState.at.toLocaleTimeString()}` : 'Never synced'}
+              style={{ fontSize: 10, color: '#f87171', fontWeight: 700 }}
+            >
+              ● backend offline
+            </span>
+          )}
         </span>
       </div>
 
