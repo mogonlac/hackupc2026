@@ -6,8 +6,12 @@
  * - closePR(number)        → closes without merging
  */
 
+const { execFile } = require('node:child_process');
+const { promisify } = require('node:util');
 const { Octokit } = require('@octokit/rest');
 const { GoogleGenAI } = require('@google/genai');
+
+const execFileAsync = promisify(execFile);
 
 const oc = new Octokit({ auth: process.env.GITHUB_TOKEN });
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -152,6 +156,28 @@ async function mergePR(number) {
   });
 }
 
+/**
+ * After a PR merge, GitHub's default branch is ahead of your disk. If this
+ * machine has a clone of the same repo, set GITHUB_LOCAL_REPO to that root
+ * (the folder that contains `.git`) and we run `git pull --ff-only` so local
+ * files (e.g. demo/) match the remote.
+ */
+async function pullLocalRepoIfConfigured() {
+  const root = process.env.GITHUB_LOCAL_REPO?.trim();
+  if (!root) return { skipped: true };
+
+  try {
+    const { stdout, stderr } = await execFileAsync('git', ['-C', root, 'pull', '--ff-only'], {
+      maxBuffer: 10 * 1024 * 1024,
+    });
+    const out = [stdout, stderr].filter(Boolean).join('').trim();
+    return { ok: true, root, log: out || null };
+  } catch (err) {
+    const msg = err.stderr?.toString?.() || err.stdout?.toString?.() || err.message;
+    return { ok: false, root, message: msg.trim() || err.message };
+  }
+}
+
 async function closePR(number) {
   await oc.pulls.update({
     owner: OWNER, repo: REPO,
@@ -160,4 +186,4 @@ async function closePR(number) {
   });
 }
 
-module.exports = { createPR, mergePR, closePR };
+module.exports = { createPR, mergePR, closePR, pullLocalRepoIfConfigured };

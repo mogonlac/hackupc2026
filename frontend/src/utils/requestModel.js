@@ -52,6 +52,7 @@ function coerceStatus(s) {
   if (!s) return STATUS.PENDING;
   if (s === 'pending') return STATUS.PENDING;
   if (s === 'resolved') return STATUS.RESOLVED;
+  if (s === 'merged') return STATUS.RESOLVED; // GitHub PR merged — treat as done in metrics
   if (s === 'denied') return STATUS.DENIED;
   if (s === 'sent_back') return STATUS.SENT_BACK;
   if (Object.values(STATUS).includes(s)) return s;

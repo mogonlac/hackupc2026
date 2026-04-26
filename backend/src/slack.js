@@ -1,6 +1,6 @@
 const { App } = require('@slack/bolt');
 const { parseRequest } = require('./parser');
-const { createPR, mergePR, closePR } = require('./github');
+const { createPR, mergePR, closePR, pullLocalRepoIfConfigured } = require('./github');
 const { onboardMember } = require('./onboarding');
 const store  = require('./store');
 const router = require('./router');
@@ -429,11 +429,19 @@ function createSlackApp() {
     const deptId       = parsed.team.toLowerCase().replace(/\s+/g, '_');
     console.log(`[router] team=${parsed.team} → assignee=${assigneeName || 'unassigned'} (${assignee?.memberId || '-'})`);
 
+    // Tickets live on the *assignee's* row. Work someone else routed to you is inbound;
+    // only self-assigned / unassigned queue items stay outbound from the requester's perspective.
+    const assigneeMid = assignee?.memberId || null;
+    const ticketDirection =
+      assigneeMid && assigneeMid !== 'unassigned' && assigneeMid !== member.memberId
+        ? 'inbound'
+        : 'outbound';
+
     const req = {
       id:              nextId(),
       description:     parsed.description,
       complexity:      parsed.complexity,
-      direction:       'outbound',
+      direction:       ticketDirection,
       status:          'pending',
       created_at:      new Date().toISOString(),
       timestamp:       new Date().toISOString(),
@@ -759,9 +767,22 @@ function createSlackApp() {
     await ack();
     try {
       await mergePR(parseInt(action.value));
+      const sync = await pullLocalRepoIfConfigured();
+      let foot = '';
+      if (sync.skipped) {
+        foot =
+          '\n\n_Local clone not synced — set `GITHUB_LOCAL_REPO` to your repo root on this machine, or run `git pull` there yourself._';
+      } else if (sync.ok) {
+        foot = `\n\n_Local clone updated: \`${sync.root}\`._`;
+      } else {
+        foot = `\n\n_⚠ Merged on GitHub, but \`git pull\` failed in \`${sync.root}\`: ${sync.message}_`;
+      }
       await client.chat.update({
         channel: body.channel.id, ts: body.message.ts,
-        blocks: [{ type: 'section', text: { type: 'mrkdwn', text: `✅ PR #${action.value} merged. Change is live.` } }],
+        blocks: [{
+          type: 'section',
+          text: { type: 'mrkdwn', text: `✅ PR #${action.value} merged on GitHub.${foot}` },
+        }],
       });
     } catch (err) {
       await client.chat.update({
