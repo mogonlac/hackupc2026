@@ -2,7 +2,8 @@ import { useRef, useMemo, useState } from 'react';
 import { navToHash } from '../utils/nav';
 import { isRequestOpen } from '../utils/requestModel';
 import { SCORE_COLORS } from '../utils/scoring';
-import { fmtTimestamp } from '../utils/format';
+import { fmtTimestamp, fmtRelative } from '../utils/format';
+import { STATUS_STYLE } from './StatusPill';
 import { TAB_BAR_H, PANEL_HEADER_H, clampPanelH, Z } from '../utils/layout';
 import { COLORS, MONO_STACK, PANEL_HEADER_GRADIENT, TNUM } from '../utils/theme';
 import { usePersistedState } from '../utils/persist';
@@ -38,8 +39,6 @@ export default function LiveRequestsPanel({
   const [sortKey, setSortKey] = usePersistedState('live.sortKey', 'complexity');
   const [sortDir, setSortDir] = usePersistedState('live.sortDir', -1);
   const [fPendingOnly, setFPendingOnly] = usePersistedState('live.f.pending', true);
-  const [fHighC, setFHighC] = usePersistedState('live.f.highC', false);
-  const [fOld, setFOld] = usePersistedState('live.f.old', false);
   const [query, setQuery] = useState('');
 
   const filtered = useMemo(() => {
@@ -48,18 +47,13 @@ export default function LiveRequestsPanel({
       .map(r => ({ ...r, _created: r.created_at }))
       .filter((r) => {
         if (fPendingOnly && !isRequestOpen(r)) return false;
-        if (fHighC && (r.complexity || 0) < 7) return false;
-        if (fOld) {
-          const days = (now.getTime() - new Date(r._created).getTime()) / 86400000;
-          if (days <= 7) return false;
-        }
         if (q) {
           const hay = `${r.id ?? ''} ${r.description} ${r._from ?? ''} ${r._to ?? ''} ${r._memberName ?? ''} ${r._deptName ?? ''}`.toLowerCase();
           if (!hay.includes(q)) return false;
         }
         return true;
       });
-  }, [requests, fPendingOnly, fHighC, fOld, query, now]);
+  }, [requests, fPendingOnly, query, now]);
 
   const pending = useMemo(() => {
     const list = [...filtered];
@@ -165,8 +159,6 @@ export default function LiveRequestsPanel({
             />
             {[
               { on: fPendingOnly, set: setFPendingOnly, label: 'Pending only' },
-              { on: fHighC, set: setFHighC, label: 'Complexity ≥ 7' },
-              { on: fOld, set: setFOld, label: '> 7 days old' },
             ].map(f => (
               <button
                 key={f.label}
@@ -194,7 +186,9 @@ export default function LiveRequestsPanel({
               <col style={{ width: 88 }} />
               <col />
               <col style={{ width: 96, minWidth: 88 }} />
+              <col style={{ width: 90 }} />
               <col style={{ width: 128 }} />
+              <col style={{ width: 72 }} />
             </colgroup>
             <thead>
               <tr style={{ background: COLORS.bgChrome, position: 'sticky', top: 0, zIndex: 1 }}>
@@ -204,7 +198,9 @@ export default function LiveRequestsPanel({
                   { id: 'id', text: 'ID', sort: null },
                   { id: 'desc', text: 'Description', sort: null },
                   { id: 'cplx', text: 'Complexity', sort: 'complexity', align: 'center' },
+                  { id: 'status', text: 'Status', sort: null },
                   { id: 'ts', text: 'Created', sort: 'timestamp' },
+                  { id: 'age', text: 'Age', sort: null, align: 'right' },
                 ].map(col => {
                   const sortKeyForActive = col.sort;
                   const active = sortKeyForActive
@@ -236,7 +232,7 @@ export default function LiveRequestsPanel({
             <tbody>
               {pending.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: '16px 14px', color: COLORS.textFaint, fontStyle: 'italic', fontSize: 12 }}>
+                  <td colSpan={8} style={{ padding: '16px 14px', color: COLORS.textFaint, fontStyle: 'italic', fontSize: 12 }}>
                     No requests match the filters.
                   </td>
                 </tr>
@@ -281,7 +277,15 @@ export default function LiveRequestsPanel({
                       color: r.complexity >= 8 ? SCORE_COLORS[5] : r.complexity >= 5 ? SCORE_COLORS[3] : SCORE_COLORS[1],
                     }}>{r.complexity}</span>
                   </td>
+                  {(() => { const s = STATUS_STYLE[r.status ?? 'pending'] ?? STATUS_STYLE.pending; return (
+                  <td style={{ ...td, background: s.bg, color: s.fg ?? 'transparent', fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>
+                    {s.fg ? (r.status ?? 'pending').replace('_', ' ') : ''}
+                  </td>
+                  ); })()}
                   <td style={{ ...td, color: COLORS.textMuted, fontFamily: MONO_STACK }}>{fmtTimestamp(r._created)}</td>
+                  <td style={{ ...td, textAlign: 'right', fontFamily: MONO_STACK, fontSize: 11, color: (() => { const d = (now - new Date(r._created)) / 86400000; return d > 14 ? SCORE_COLORS[5] : d > 7 ? SCORE_COLORS[4] : COLORS.textFaint; })() }}>
+                    {r._created ? fmtRelative(new Date(r._created), now) : '—'}
+                  </td>
                 </tr>
               );})}
             </tbody>

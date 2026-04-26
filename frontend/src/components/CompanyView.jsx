@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import ScoreBox from './ScoreBox';
 import StatStrip from './StatStrip';
 import Sparkline from './Sparkline';
-import { SCORE_COLORS, heatColorForFraction, heatColorForResolve } from '../utils/scoring';
+import { SCORE_COLORS, SCORE_BADGE_TEXT, heatColorForFraction, heatColorForResolve } from '../utils/scoring';
 import { fmtAvgHours } from '../utils/format';
 import { COLORS, MONO_STACK, TABLE_BASE, TABLE_TH, TABLE_TD } from '../utils/theme';
 
@@ -43,7 +43,7 @@ export default function CompanyView({ data, onDeptClick }) {
         { label: 'Closed today',     value: company.closedToday ?? 0 },
         { label: 'Avg hours / item', value: fmtAvgHours(company.avgHoursPerItem) },
         { label: 'Avg complexity',   value: company.avgComplexityAll != null ? company.avgComplexityAll.toFixed(1) : '—' },
-        { label: 'Burden score',     value: <ScoreBox value={company.score} title="Organisation average (1 = underloaded · 3 = balanced · 5 = overloaded)" /> },
+        { label: 'Burden score',     value: Number(company.score).toFixed(1), bg: SCORE_COLORS[Math.min(5, Math.max(1, Math.round(company.score)))], fg: SCORE_BADGE_TEXT[Math.min(5, Math.max(1, Math.round(company.score)))] ?? '#fff' },
       ]} />
 
       <table style={{ ...TABLE_BASE, tableLayout: 'fixed', width: '100%' }}>
@@ -120,9 +120,11 @@ export default function CompanyView({ data, onDeptClick }) {
                   />
                 </td>
                 {/* Score */}
-                <td style={{ ...TABLE_TD, ...C }}>
-                  <ScoreBox value={dept.deptScore} title={dept.name} />
+                {(() => { const b = Math.min(5, Math.max(1, Math.round(dept.deptScore))); return (
+                <td style={{ ...TABLE_TD, ...C, background: SCORE_COLORS[b], color: SCORE_BADGE_TEXT[b] ?? '#fff', fontWeight: 800, fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>
+                  {Number(dept.deptScore).toFixed(1)}
                 </td>
+                ); })()}
               </tr>
             );
           })}

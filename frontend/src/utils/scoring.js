@@ -194,7 +194,8 @@ export function computeScores(departments, options = {}) {
   const n = sorted.length;
   const rankMap = new Map();
   for (let i = 0; i < n; i++) {
-    const score = n <= 1 ? 3 : 1 + Math.min(4, Math.floor((5 * i) / n));
+    const p = n <= 1 ? 0.5 : i / (n - 1);
+    const score = p < 0.05 ? 1 : p < 0.20 ? 2 : p < 0.80 ? 3 : p < 0.95 ? 4 : 5;
     rankMap.set(sorted[i].memberId, score);
   }
 
@@ -221,6 +222,7 @@ export function computeScores(departments, options = {}) {
       }
       const burdenScore = rankMap.get(member.id) ?? 3;
       const sp = resolveSpeedHPerCForRequests(pre.reqs);
+      const avgHoursPerItem = avgHoursPerItemForRequests(pre.reqs);
       const openTrend14 = buildTrend14(pre.reqs, now);
       const workloadTrajectory = workloadTrajectoryFromOpenTrend14(openTrend14);
       return {
@@ -231,6 +233,7 @@ export function computeScores(departments, options = {}) {
         avgComplexityPending: pre.difficulty,
         oldestPendingDays: pre.oldestPendingDays,
         resolveSpeedHPerC: sp,
+        avgHoursPerItem,
         inboundPending: pre.pending.filter(r => r.direction === 'inbound').length,
         outboundPending: pre.pending.filter(r => r.direction === 'outbound').length,
         resolvedCount: pre.resolved.length,

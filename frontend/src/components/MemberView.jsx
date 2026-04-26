@@ -3,19 +3,18 @@ import ScoreBox from './ScoreBox';
 import StatStrip from './StatStrip';
 import { SCORE_COLORS, SCORE_BADGE_TEXT } from '../utils/scoring';
 import { navToHash } from '../utils/nav';
-import { fmtResolveSpeed, fmtTimestampLong, fmtDuration, durationBetween, initials } from '../utils/format';
+import { fmtAvgHours, fmtTimestampLong, fmtDuration, durationBetween, initials } from '../utils/format';
 import {
   isRequestOpen, isRequestResolved, ageOpenMs, activeWorkWindowMs, hoursForResolvedItem,
 } from '../utils/requestModel';
 import { COLORS, MONO_STACK, TABLE_BASE, TABLE_TH, TABLE_TD, TNUM } from '../utils/theme';
+import { STATUS_STYLE } from './StatusPill';
 
 function complexityColor(c) {
   if (c >= 8) return SCORE_COLORS[5];
   if (c >= 5) return SCORE_COLORS[3];
   return SCORE_COLORS[1];
 }
-
-const TRAJECTORY_STYLE = { rising: '#c2410c', stable: '#64748b', falling: '#166534' };
 
 function RequestDetail({ request, memberName, now, onClose, detailRef }) {
   if (!request) return null;
@@ -79,11 +78,18 @@ function RequestDetail({ request, memberName, now, onClose, detailRef }) {
         </div>
         <div>
           <span style={{ color: COLORS.textFaint, fontWeight: 600 }}>Status</span><br />
-          <span style={{
-            textTransform: 'uppercase', fontWeight: 700,
-            color: isRequestOpen(request) ? '#9a3412' : '#166534',
-          }}>{request.status}
-          </span>
+          {(() => {
+            const s = STATUS_STYLE[request.status] ?? STATUS_STYLE.pending;
+            return (
+              <span style={{
+                display: 'inline-block', padding: '2px 10px', borderRadius: 3,
+                background: s.bg, color: s.fg ?? '#fff',
+                fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em',
+              }}>
+                {(request.status ?? '').replace('_', ' ')}
+              </span>
+            );
+          })()}
         </div>
         <div>
           <span style={{ color: COLORS.textFaint, fontWeight: 600 }}>Work began</span><br />
@@ -133,7 +139,7 @@ function RequestTable({
       <thead>
         <tr style={{ background: COLORS.bgHeader }}>
           {['ID', 'Description', 'Complexity', 'Status', 'Created', 'Started', 'Completed', 'Time spent'].map(h => (
-            <th key={h} style={{ ...TABLE_TH, width: h === 'ID' ? 100 : h === 'Description' ? undefined : h === 'Complexity' ? 80 : undefined }}>{h}</th>
+            <th key={h} style={{ ...TABLE_TH, width: h === 'ID' ? 100 : h === 'Complexity' ? 80 : undefined }}>{h}</th>
           ))}
         </tr>
       </thead>
@@ -146,11 +152,10 @@ function RequestTable({
           const started = r.started_at;
           const finished = r.finished_at;
           const spentH = isRequestResolved(r) ? hoursForResolvedItem(r) : null;
-          const spentMs = spentH != null
-            ? spentH * 3_600_000
-            : durationBetween(started, finished);
+          const spentMs = spentH != null ? spentH * 3_600_000 : durationBetween(started, finished);
           const isSel = selectedId === r.id;
           const href = navToHash({ ...baseMemberNav, requestId: r.id });
+          const st = STATUS_STYLE[r.status] ?? STATUS_STYLE.pending;
           return (
             <tr
               key={r.id}
@@ -173,8 +178,8 @@ function RequestTable({
               <td style={{ ...TABLE_TD, textAlign: 'center', fontWeight: 700, color: complexityColor(r.complexity), fontFamily: MONO_STACK }}>
                 {r.complexity}
               </td>
-              <td style={{ ...TABLE_TD, textTransform: 'uppercase', fontSize: 11, color: isP ? '#9a3412' : '#166534', fontWeight: 600 }}>
-                {r.status}
+              <td style={{ ...TABLE_TD, background: st.bg, color: st.fg ?? '#fff', fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>
+                {(r.status ?? '').replace('_', ' ')}
               </td>
               <td style={{ ...TABLE_TD, color: COLORS.textMuted, fontFamily: MONO_STACK, whiteSpace: 'nowrap' }}>{fmtTimestampLong(created)}</td>
               <td style={{ ...TABLE_TD, color: COLORS.textMuted, fontFamily: MONO_STACK, whiteSpace: 'nowrap' }}>
@@ -194,13 +199,6 @@ function RequestTable({
   );
 }
 
-function signed(n) {
-  if (n == null || Number.isNaN(n)) return '—';
-  const s = n.toFixed(1);
-  if (n > 0) return `+${s}`;
-  return s;
-}
-
 export default function MemberView({
   member, dept, now, selectedRequestId, onSelectRequest,
 }) {
@@ -208,9 +206,6 @@ export default function MemberView({
   const outbound = requests.filter(r => r.direction === 'outbound');
   const inbound = requests.filter(r => r.direction === 'inbound');
   const init = initials(member.name);
-  const dDept = member.burdenScore - (dept.deptScore || 0);
-  const traj = member.workloadTrajectory || 'stable';
-  const trajC = TRAJECTORY_STYLE[traj] || TRAJECTORY_STYLE.stable;
   const activeReq = selectedRequestId
     ? requests.find(r => r.id === selectedRequestId)
     : null;
@@ -230,8 +225,7 @@ export default function MemberView({
         display: 'flex', alignItems: 'center', gap: 16,
         padding: '14px 20px', background: COLORS.bgPanel,
         borderBottom: `1px solid ${COLORS.border}`,
-      }}
-      >
+      }}>
         <span style={{
           display: 'inline-flex', width: 44, height: 44, borderRadius: 3,
           alignItems: 'center', justifyContent: 'center',
@@ -253,9 +247,7 @@ export default function MemberView({
         { label: 'Closed this week', value: member.throughput7d ?? 0, color: (member.throughput7d ?? 0) > 0 ? '#166534' : undefined },
         { label: 'Outbound pending', value: member.outboundPending ?? 0 },
         { label: 'Inbound pending', value: member.inboundPending ?? 0 },
-        { label: 'Hours per item', value: fmtResolveSpeed(member.resolveSpeedHPerC) },
-        { label: '2-week trend', value: <span style={{ textTransform: 'capitalize', color: trajC, fontWeight: 800 }}>{traj}</span> },
-        { label: 'vs team avg', value: signed(dDept) },
+        { label: 'Hours per item', value: fmtAvgHours(member.avgHoursPerItem) },
       ]} />
 
       {activeReq && (

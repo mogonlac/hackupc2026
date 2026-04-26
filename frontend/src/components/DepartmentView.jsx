@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import ScoreBox from './ScoreBox';
 import StatStrip from './StatStrip';
-import { SCORE_COLORS, SCORE_BADGE_TEXT, findRedistributeMatch, heatColorForFraction, heatColorForResolve } from '../utils/scoring';
-import { fmtResolveSpeed, initials } from '../utils/format';
+import { SCORE_COLORS, SCORE_BADGE_TEXT, heatColorForFraction, heatColorForResolve } from '../utils/scoring';
+import { fmtResolveSpeed, fmtAvgHours, initials } from '../utils/format';
 import { COLORS, MONO_STACK, TABLE_BASE, TABLE_TH, TABLE_TD, TNUM } from '../utils/theme';
 
 export default function DepartmentView({ dept, onMemberClick }) {
@@ -34,7 +34,7 @@ export default function DepartmentView({ dept, onMemberClick }) {
     [dept.members],
   );
   const allResolves = useMemo(
-    () => dept.members.map(m => m.resolveSpeedHPerC).filter(v => v != null),
+    () => dept.members.map(m => m.avgHoursPerItem).filter(v => v != null),
     [dept.members],
   );
 
@@ -42,14 +42,11 @@ export default function DepartmentView({ dept, onMemberClick }) {
     { key: null, label: '' },
     { key: 'name', label: 'Name' },
     { key: 'role', label: 'Role' },
-    { key: 'pendingCount', label: 'Open requests', align: 'right' },
-    { key: 'avgComplexityPending', label: 'Avg complexity', align: 'right' },
-    { key: 'oldestPendingDays', label: 'Oldest open (days)', align: 'right' },
-    { key: 'throughput7d', label: 'Closed this week', align: 'right' },
-    { key: 'resolveSpeedHPerC', label: 'Hours per item', align: 'right' },
-    { key: null, label: 'vs team' },
-    { key: null, label: '2-week trend' },
-    { key: null, label: 'Rebalance hint' },
+    { key: 'pendingCount', label: 'Open requests', align: 'center' },
+    { key: 'avgComplexityPending', label: 'Avg complexity', align: 'center' },
+    { key: 'oldestPendingDays', label: 'Oldest open (days)', align: 'center' },
+    { key: 'throughput7d', label: 'Closed this week', align: 'center' },
+    { key: 'avgHoursPerItem', label: 'Hours per item', align: 'center' },
     { key: 'burdenScore', label: 'Score', align: 'center' },
   ];
 
@@ -65,7 +62,7 @@ export default function DepartmentView({ dept, onMemberClick }) {
           { label: 'People', value: dept.headcount },
           { label: 'Closed this week', value: dept.throughput7d ?? 0 },
           { label: 'Hours per item', value: fmtResolveSpeed(dept.resolveSpeed) },
-          { label: 'Burden score', value: <ScoreBox value={dept.deptScore} title="Team mean (1–5)" /> },
+          { label: 'Burden score', value: Number(dept.deptScore).toFixed(1), bg: SCORE_COLORS[Math.min(5, Math.max(1, Math.round(dept.deptScore)))], fg: SCORE_BADGE_TEXT[Math.min(5, Math.max(1, Math.round(dept.deptScore)))] ?? '#fff' },
         ]}
       />
 
@@ -98,13 +95,7 @@ export default function DepartmentView({ dept, onMemberClick }) {
         <tbody>
           {sorted.map((member, i) => {
             const init = initials(member.name);
-            const hint = (member.burdenScore === 5)
-              ? findRedistributeMatch(member, dept.members)
-              : null;
             const pendingT = member.pendingCount / maxPending;
-            const dTeam = member.burdenScore - (dept.deptScore || 0);
-            const traj = member.workloadTrajectory || 'stable';
-            const trajC = traj === 'rising' ? '#c2410c' : traj === 'falling' ? '#166534' : '#64748b';
             return (
               <tr
                 key={member.id}
@@ -131,35 +122,28 @@ export default function DepartmentView({ dept, onMemberClick }) {
                 </td>
                 <td style={{ ...TABLE_TD, fontWeight: 600, color: COLORS.link }}>{member.name}</td>
                 <td style={{ ...TABLE_TD, color: COLORS.textMuted }}>{member.role}</td>
-                <td style={{ ...TABLE_TD, textAlign: 'right', background: heatColorForFraction(pendingT), fontFamily: MONO_STACK }}>
+                <td style={{ ...TABLE_TD, textAlign: 'center', background: heatColorForFraction(pendingT), fontFamily: MONO_STACK }}>
                   {member.pendingCount}
                 </td>
-                <td style={{ ...TABLE_TD, textAlign: 'right', fontFamily: MONO_STACK }}>
+                <td style={{ ...TABLE_TD, textAlign: 'center', fontFamily: MONO_STACK }}>
                   {member.pendingCount > 0 ? (member.avgComplexityPending || 0).toFixed(1) : '—'}
                 </td>
-                <td style={{ ...TABLE_TD, textAlign: 'right', fontFamily: MONO_STACK }}>
+                <td style={{ ...TABLE_TD, textAlign: 'center', fontFamily: MONO_STACK }}>
                   {member.pendingCount > 0 && member.oldestPendingDays != null
                     ? member.oldestPendingDays.toFixed(1)
                     : '—'}
                 </td>
-                <td style={{ ...TABLE_TD, textAlign: 'right', fontFamily: MONO_STACK, color: (member.throughput7d ?? 0) > 0 ? '#166534' : COLORS.textFaint, fontWeight: 600 }}>
+                <td style={{ ...TABLE_TD, textAlign: 'center', fontFamily: MONO_STACK, color: (member.throughput7d ?? 0) > 0 ? '#166534' : COLORS.textFaint, fontWeight: 600 }}>
                   {member.throughput7d ?? 0}
                 </td>
-                <td style={{ ...TABLE_TD, textAlign: 'right', fontFamily: MONO_STACK, background: heatColorForResolve(member.resolveSpeedHPerC, allResolves), color: COLORS.textMuted }}>
-                  {fmtResolveSpeed(member.resolveSpeedHPerC)}
+                <td style={{ ...TABLE_TD, textAlign: 'center', fontFamily: MONO_STACK, background: heatColorForResolve(member.avgHoursPerItem, allResolves), color: COLORS.textMuted }}>
+                  {fmtAvgHours(member.avgHoursPerItem)}
                 </td>
-                <td style={{ ...TABLE_TD, textAlign: 'right', fontFamily: MONO_STACK, fontSize: 11, color: dTeam > 0 ? '#9a3412' : dTeam < 0 ? '#1d4ed8' : COLORS.textMuted, fontWeight: 600 }} title="Burden score relative to the team average.">
-                  {dTeam >= 0 ? '+' : ''}{dTeam.toFixed(1)}
+                {(() => { const b = Math.min(5, Math.max(1, Math.round(member.burdenScore))); return (
+                <td style={{ ...TABLE_TD, textAlign: 'center', background: SCORE_COLORS[b], color: SCORE_BADGE_TEXT[b] ?? '#fff', fontWeight: 800, fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>
+                  {Number(member.burdenScore).toFixed(1)}
                 </td>
-                <td style={{ ...TABLE_TD, textAlign: 'center', fontSize: 10, fontWeight: 800, textTransform: 'capitalize', color: trajC }} title="Is the open queue growing or shrinking? Compares week 1 vs week 2 of the last 14 days.">
-                  {traj}
-                </td>
-                <td style={{ ...TABLE_TD, fontSize: 11, color: '#0f766e', maxWidth: 220 }}>
-                  {hint?.text ?? '—'}
-                </td>
-                <td style={{ ...TABLE_TD, textAlign: 'center' }}>
-                  <ScoreBox value={member.burdenScore} title={member.name} />
-                </td>
+                ); })()}
               </tr>
             );
           })}

@@ -13,10 +13,7 @@ import DepartmentView from './components/DepartmentView';
 import MemberView from './components/MemberView';
 import TabBar from './components/TabBar';
 import LiveRequestsPanel from './components/LiveRequestsPanel';
-import RecommendationsPanel from './components/RecommendationsPanel';
-import GraphingPanel from './components/GraphingPanel';
 import slapHand from './assets/slap-hand.png';
-import { buildRecommendations } from './utils/recommendations';
 
 export default function App() {
   /* "now" only ticks once a minute and is the SINGLE source of truth across the app
@@ -37,7 +34,11 @@ export default function App() {
     });
   }, []);
 
-  useEffect(() => { refreshData(); }, [refreshData]);
+  useEffect(() => {
+    refreshData();
+    const i = setInterval(refreshData, 10_000);
+    return () => clearInterval(i);
+  }, [refreshData]);
 
   /* Heavy aggregation runs once per `now` tick or when rawData changes. */
   const data = useMemo(() => computeScores(rawData.departments, { now }), [now, rawData]);
@@ -62,11 +63,7 @@ export default function App() {
 
   /* UI preferences — persisted across refreshes. */
   const [liveRequestsOpen, setLiveRequestsOpen] = usePersistedState('live.open', false);
-  const [graphingOpen, setGraphingOpen] = usePersistedState('graphing.open', false);
   const [liveContentHeight, setLiveContentHeight] = usePersistedState('live.height', 220);
-  const [recommendationsOpen, setRecommendationsOpen] = usePersistedState('recommendations.open', true);
-  const [recommendationsContentHeight, setRecommendationsContentHeight] = usePersistedState('recommendations.height', 200);
-  const [graphingContentHeight, setGraphingContentHeight] = usePersistedState('graphing.height', 240);
 
   const liveFilterRef = useRef(null);
   const goNav = useCallback((next) => {
@@ -84,15 +81,13 @@ export default function App() {
         e.preventDefault();
         if (!liveRequestsOpen) setLiveRequestsOpen(true);
         setTimeout(() => liveFilterRef.current?.focus?.(), 50);
-      } else if (e.key === 'g') {
-        setGraphingOpen(v => !v);
       } else if (e.key === 'l') {
         setLiveRequestsOpen(v => !v);
       }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [liveRequestsOpen, setLiveRequestsOpen, setGraphingOpen]);
+  }, [liveRequestsOpen, setLiveRequestsOpen]);
 
   const stack = useMemo(() => navStack(nav), [nav]);
   const tabs = useMemo(() => stack.map((frame, i) => {
@@ -116,33 +111,12 @@ export default function App() {
     : null;
 
   const liveBlockH = PANEL_HEADER_H + (liveRequestsOpen ? liveContentHeight : 0);
-  const recBlockH = PANEL_HEADER_H + (recommendationsOpen ? recommendationsContentHeight : 0);
-  const graphingBottomPx = TAB_BAR_H + liveBlockH + recBlockH;
-  const mainPadBottom = 20 + TAB_BAR_H + liveBlockH + recBlockH + (graphingOpen ? PANEL_HEADER_H + graphingContentHeight : 0);
+  const mainPadBottom = 20 + TAB_BAR_H + liveBlockH;
 
-  const { liveRequests, liveTitle, graphingView } = useMemo(
+  const { liveRequests, liveTitle } = useMemo(
     () => buildView({ nav, data, currentDept, currentMember }),
     [nav, data, currentDept, currentMember],
   );
-
-  const recommendationsModel = useMemo(
-    () => buildRecommendations({ nav, data, currentDept, currentMember, now }),
-    [nav, data, currentDept, currentMember, now],
-  );
-
-  const onRecommendationNav = useCallback((target) => {
-    if (!target || !target.kind) return;
-    if (target.kind === 'company') goNav({ kind: 'company' });
-    else if (target.kind === 'dept' && target.deptId) goNav({ kind: 'dept', deptId: target.deptId });
-    else if (target.kind === 'member' && target.deptId && target.memberId) {
-      goNav({
-        kind: 'member',
-        deptId: target.deptId,
-        memberId: target.memberId,
-        requestId: target.requestId,
-      });
-    }
-  }, [goNav]);
 
   const openRequestFromLive = useCallback((r) => {
     if (!r?._deptId || !r?._memberId || !r.id) return;
@@ -219,24 +193,6 @@ export default function App() {
 
       {isOrgView && (
         <>
-          <GraphingPanel
-            view={graphingView}
-            open={graphingOpen}
-            onOpenChange={setGraphingOpen}
-            contentHeight={graphingContentHeight}
-            onContentHeightChange={setGraphingContentHeight}
-            bottomPx={graphingBottomPx}
-          />
-          <RecommendationsPanel
-            title={recommendationsModel.title}
-            items={recommendationsModel.items}
-            open={recommendationsOpen}
-            onOpenChange={setRecommendationsOpen}
-            contentHeight={recommendationsContentHeight}
-            onContentHeightChange={setRecommendationsContentHeight}
-            bottomPx={TAB_BAR_H + liveBlockH}
-            onNavigate={onRecommendationNav}
-          />
           <LiveRequestsPanel
             requests={liveRequests}
             title={liveTitle}
@@ -348,22 +304,7 @@ function buildView({ nav, data, currentDept, currentMember }) {
         ),
       ),
     );
-    return {
-      liveRequests: allRequests,
-      liveTitle: 'ALL',
-      graphingView: {
-        workloadBars: surface.map(d => ({
-          label: d.name.length > 10 ? d.name.split(' ')[0] : d.name,
-          fullLabel: d.name,
-          valuePending: d.pendingTotal,
-          valueResolved: d.members.reduce((s, m) => s + m.resolvedCount, 0),
-        })),
-        workloadStacked: true,
-        workloadCaption: 'Departments ranked by workload — open requests vs completed',
-        workShare: workShareByMembers(allPeople),
-        workShareTitle: 'Who completed the most work',
-      },
-    };
+    return { liveRequests: allRequests, liveTitle: 'ALL' };
   }
   if (nav.kind === 'dept' && currentDept) {
     const allRequests = currentDept.members.flatMap(m =>
@@ -377,28 +318,10 @@ function buildView({ nav, data, currentDept, currentMember }) {
         }, memberById),
       ),
     );
-    const sortedM = [...currentDept.members].sort((a, b) => b.burdenScore - a.burdenScore);
-    return {
-      liveRequests: allRequests,
-      liveTitle: currentDept.name.toUpperCase(),
-      graphingView: {
-        workloadBars: sortedM.map(m => ({
-          label: m.name.length > 10 ? m.name.split(' ').map(n => n[0]).join('') : m.name,
-          fullLabel: m.name,
-          valuePending: m.pendingCount,
-          valueResolved: m.resolvedCount,
-        })),
-        workloadStacked: true,
-        workloadCaption: `${currentDept.name} — people ranked by workload; open requests vs completed`,
-        workShare: workShareByMembers(currentDept.members),
-        workShareTitle: 'Who completed the most work',
-      },
-    };
+    return { liveRequests: allRequests, liveTitle: currentDept.name.toUpperCase() };
   }
   if (nav.kind === 'member' && currentMember && currentDept) {
     const reqs = currentMember.requests || [];
-    const pend = currentMember.pendingCount || 0;
-    const res = currentMember.resolvedCount || 0;
     return {
       liveRequests: reqs.map(r =>
         enrichLiveRequest({
@@ -410,32 +333,9 @@ function buildView({ nav, data, currentDept, currentMember }) {
         }, memberById),
       ),
       liveTitle: currentMember.name.toUpperCase(),
-      graphingView: {
-        workloadBars: [
-          { label: 'Open', value: pend, color: '#c2410c', fullLabel: 'Open' },
-          { label: 'Done', value: res, color: '#10b981', fullLabel: 'Done' },
-        ],
-        workloadStacked: false,
-        workloadCaption: `${currentMember.name} — open requests vs completed`,
-        workShare: [
-          { label: 'Done', fullLabel: 'Resolved', value: res },
-          { label: 'Open', fullLabel: 'Pending', value: pend },
-        ],
-        workShareTitle: 'Completed vs still open',
-      },
     };
   }
-  return {
-    liveRequests: [],
-    liveTitle: '',
-    graphingView: {
-      workloadBars: [],
-      workloadStacked: false,
-      workloadCaption: '',
-      workShare: [],
-      workShareTitle: '',
-    },
-  };
+  return { liveRequests: [], liveTitle: '' };
 }
 
 function shortWorkerLabel(name) {
