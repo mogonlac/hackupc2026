@@ -3,104 +3,87 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Arc North — we build the thing</title>
+  <title>Arc North — Bakery &amp; Café, Gràcia</title>
   <style>
     :root {
       --yellow: #facc15;
-      --yellow-dark: #eab308;
+      --yellow-dark: #ca9a04;
       --blue: #1e3a8a;
-      --blue-mid: #2563eb;
+      --blue-light: #dbeafe;
       --red: #b91c1c;
+      --red-light: #fee2e2;
       --green: #15803d;
       --cream: #fffbeb;
       --ink: #0f172a;
-      --shadow: 4px 4px 0 var(--ink);
-      --shadow-lg: 6px 6px 0 var(--ink);
-      font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+      --white: #ffffff;
     }
 
-    *, *::before, *::after { box-sizing: border-box; }
-
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
 
     body {
-      margin: 0;
-      min-height: 100dvh;
-      background: var(--yellow);
+      font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
       color: var(--ink);
+      background: var(--cream);
     }
 
     /* ── scanline texture ── */
-    body::before {
+    body::after {
       content: '';
       position: fixed;
       inset: 0;
       pointer-events: none;
-      z-index: 999;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.03) 2px,
-        rgba(0,0,0,0.03) 4px
-      );
+      z-index: 9999;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.018) 3px, rgba(0,0,0,0.018) 4px);
     }
 
     /* ── nav ── */
-    nav.topbar {
+    nav {
       position: sticky;
       top: 0;
-      z-index: 20;
+      z-index: 100;
       display: flex;
       align-items: center;
-      gap: 1.5rem;
-      padding: 0.7rem clamp(1rem, 4vw, 2rem);
+      gap: 2rem;
+      padding: 0 clamp(1rem, 4vw, 2.5rem);
+      height: 52px;
       background: var(--blue);
       border-bottom: 4px solid var(--ink);
-      box-shadow: 0 4px 0 var(--ink);
     }
 
-    nav.topbar .brand {
-      font-size: 1rem;
+    .brand {
+      font-size: 1.05rem;
       font-weight: 900;
       letter-spacing: -0.03em;
+      text-transform: uppercase;
       color: var(--yellow);
       text-decoration: none;
-      text-transform: uppercase;
+      flex-shrink: 0;
     }
 
-    nav.topbar .brand span {
-      color: var(--red);
-      font-style: italic;
-    }
+    .brand em { font-style: normal; color: var(--red); }
 
-    nav.topbar .links {
-      display: flex;
-      gap: 1.25rem;
-      margin-left: 0.5rem;
-    }
-
-    nav.topbar .links a {
-      font-size: 0.78rem;
+    .nav-links { display: flex; gap: 1.5rem; }
+    .nav-links a {
+      font-size: 0.75rem;
       font-weight: 700;
-      color: rgba(255,255,255,0.75);
-      text-decoration: none;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.07em;
+      color: rgba(255,255,255,0.65);
+      text-decoration: none;
     }
+    .nav-links a:hover { color: var(--yellow); }
 
-    nav.topbar .links a:hover { color: var(--yellow); }
-
-    nav.topbar .badge {
+    .nav-badge {
       margin-left: auto;
-      font-size: 0.6rem;
+      font-size: 0.58rem;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: var(--blue);
       background: var(--yellow);
+      color: var(--blue);
       border: 2px solid var(--ink);
-      padding: 0.25rem 0.6rem;
+      padding: 0.2rem 0.55rem;
       border-radius: 3px;
     }
 
@@ -109,88 +92,190 @@
       overflow: hidden;
       background: var(--red);
       border-bottom: 3px solid var(--ink);
-      padding: 0.3rem 0;
+      padding: 0.32rem 0;
     }
-
     .ticker {
       display: flex;
-      gap: 3rem;
+      gap: 2.5rem;
       white-space: nowrap;
-      animation: tick 22s linear infinite;
-      font-size: 0.7rem;
+      animation: tick 24s linear infinite;
+      font-size: 0.68rem;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--cream);
+      letter-spacing: 0.09em;
+      color: #fff;
     }
-
     @keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-
-    /* ── main layout ── */
-    main {
-      max-width: 58rem;
-      margin: 0 auto;
-      padding: clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 2rem);
-    }
 
     /* ── hero ── */
     .hero {
-      margin-bottom: 3rem;
+      background: var(--yellow);
+      border-bottom: 4px solid var(--ink);
+      padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1rem, 4vw, 2.5rem);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
     }
+
+    @media (max-width: 680px) { .hero { grid-template-columns: 1fr; } .hero-board { display: none; } }
 
     .hero-stamp {
       display: inline-block;
-      font-size: 0.65rem;
+      font-size: 0.63rem;
       font-weight: 900;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--cream);
       background: var(--red);
       border: 2px solid var(--ink);
-      padding: 0.35rem 0.8rem;
+      padding: 0.3rem 0.75rem;
       border-radius: 3px;
-      box-shadow: var(--shadow-sm, 3px 3px 0 var(--ink));
+      box-shadow: 3px 3px 0 var(--ink);
       margin-bottom: 1.1rem;
       transform: rotate(-1.5deg);
       display: inline-block;
     }
 
     .hero h1 {
-      margin: 0 0 0.75rem;
-      font-size: clamp(2rem, 6.5vw, 3.5rem);
+      font-size: clamp(2.4rem, 5.5vw, 4rem);
       font-weight: 900;
-      line-height: 1.05;
-      letter-spacing: -0.04em;
+      line-height: 1.0;
+      letter-spacing: -0.045em;
       color: var(--blue);
-      text-shadow: 3px 3px 0 var(--ink);
+      text-shadow: 3px 3px 0 rgba(0,0,0,0.12);
+      margin-bottom: 1rem;
     }
 
-    .hero h1 em {
-      font-style: normal;
-      color: var(--red);
-    }
+    .hero h1 em { font-style: normal; color: var(--red); display: block; }
 
-    .hero p {
-      margin: 0 0 1.5rem;
-      font-size: 1.05rem;
-      line-height: 1.6;
+    .hero-lede {
+      font-size: 1rem;
+      line-height: 1.65;
       color: var(--ink);
-      max-width: 46ch;
+      max-width: 42ch;
       font-weight: 600;
+      margin-bottom: 1.75rem;
     }
 
+    .btn-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.75rem 1.3rem;
+      font-weight: 900;
+      font-size: 0.82rem;
+      text-decoration: none;
+      border: 3px solid var(--ink);
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      box-shadow: 4px 4px 0 var(--ink);
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .btn:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--ink); }
+    .btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+    .btn-a { background: var(--red); color: #fff; }
+    .btn-b { background: var(--white); color: var(--ink); }
+
+    /* ── specials board (hero right) ── */
+    .hero-board {
+      background: var(--blue);
+      border: 4px solid var(--ink);
+      border-radius: 12px;
+      box-shadow: 6px 6px 0 var(--ink);
+      padding: 1.5rem;
+      transform: rotate(1deg);
+    }
+
+    .board-title {
+      font-size: 0.65rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--yellow);
+      text-align: center;
+      border-bottom: 2px dashed rgba(255,255,255,0.2);
+      padding-bottom: 0.65rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .board-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0.45rem 0;
+      border-bottom: 1px dotted rgba(255,255,255,0.15);
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .board-item:last-child { border-bottom: none; }
+
+    .board-price {
+      font-weight: 900;
+      color: var(--yellow);
+      font-size: 0.95rem;
+    }
+
+    .board-note {
+      margin-top: 0.9rem;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.35);
+      text-align: center;
+    }
+
+    /* ── section wrapper ── */
+    .section-yellow { background: var(--yellow); border-bottom: 4px solid var(--ink); }
+    .section-cream  { background: var(--cream);  border-bottom: 4px solid var(--ink); }
+    .section-blue   { background: var(--blue);   border-bottom: 4px solid var(--ink); }
+    .section-white  { background: var(--white);  border-bottom: 4px solid var(--ink); }
+
+    .section-inner {
+      max-width: 60rem;
+      margin: 0 auto;
+      padding: clamp(2rem, 5vw, 3.5rem) clamp(1rem, 4vw, 2.5rem);
+    }
+
+    .section-heading {
+      font-size: 1.45rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      margin-bottom: 0.35rem;
+    }
+
+    .section-heading.light { color: var(--yellow); }
+    .section-heading.dark  { color: var(--blue); border-bottom: 4px solid var(--red); display: inline-block; padding-bottom: 2px; }
+
+    .section-sub {
+      font-size: 0.92rem;
+      font-weight: 600;
+      line-height: 1.6;
+      max-width: 50ch;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-sub.light { color: rgba(255,255,255,0.7); }
+    .section-sub.dark  { color: #475569; }
+
+    /* ── divider ── */
     .divider {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
-      margin: 2.5rem 0;
-      font-size: 0.75rem;
-      font-weight: 800;
-      letter-spacing: 0.1em;
+      gap: 0.75rem;
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--blue);
+      margin-bottom: 1.75rem;
     }
-
     .divider::before, .divider::after {
       content: '';
       flex: 1;
@@ -198,342 +283,206 @@
       background: var(--ink);
     }
 
-    /* ── buttons ── */
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
+    .divider.light { color: rgba(255,255,255,0.5); }
+    .divider.light::before, .divider.light::after { background: rgba(255,255,255,0.2); }
+
+    /* ── price list ── */
+    .price-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 0.75rem;
-      margin-bottom: 2rem;
     }
 
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.8rem 1.25rem;
-      font-weight: 900;
-      font-size: 0.88rem;
-      text-decoration: none;
-      border: 3px solid var(--ink);
-      border-radius: 6px;
-      transition: transform 0.12s ease, box-shadow 0.12s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .btn:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-lg); }
-    .btn:active { transform: translate(2px,2px); box-shadow: none; }
-
-    .btn-a { background: var(--red); color: var(--cream); box-shadow: var(--shadow); }
-    .btn-b { background: var(--cream); color: var(--ink); box-shadow: var(--shadow); }
-
-    /* ── feature strip ── */
-    .feature-strip {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-bottom: 2.5rem;
-      padding: 1rem 1.2rem;
-      background: var(--cream);
+    .price-card {
+      background: var(--white);
       border: 3px solid var(--ink);
       border-radius: 8px;
-      box-shadow: var(--shadow);
-      transform: rotate(0.4deg);
-    }
-
-    .feature-strip .intro {
-      width: 100%;
-      font-size: 0.72rem;
+      box-shadow: 4px 4px 0 var(--ink);
+      padding: 0.85rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-weight: 700;
-      color: var(--blue);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 0.2rem;
+      font-size: 0.88rem;
+      transition: transform 0.1s, box-shadow 0.1s;
     }
 
-    .tag {
-      font-size: 0.72rem;
-      font-weight: 800;
-      color: var(--cream);
-      background: var(--blue);
-      border: 2px solid var(--ink);
-      padding: 0.3rem 0.6rem;
-      border-radius: 4px;
-      box-shadow: 2px 2px 0 var(--ink);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
+    .price-card:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--ink); }
 
-    /* ── section ── */
-    section {
-      margin-bottom: 3rem;
-    }
-
-    section h2 {
-      margin: 0 0 0.4rem;
-      font-size: 1.5rem;
+    .price-card .price {
       font-weight: 900;
-      letter-spacing: -0.03em;
-      color: var(--blue);
-      text-transform: uppercase;
-      display: inline-block;
-      border-bottom: 4px solid var(--red);
-      padding-bottom: 2px;
+      font-size: 1rem;
+      color: var(--red);
     }
 
-    section .sub {
-      margin: 0.5rem 0 1.25rem;
-      font-size: 0.95rem;
-      color: var(--ink);
-      max-width: 50ch;
-      line-height: 1.55;
-      font-weight: 600;
-    }
-
-    /* ── cards ── */
+    /* ── info cards ── */
     .cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 1rem;
     }
 
     .card {
       border: 3px solid var(--ink);
       border-radius: 10px;
-      background: var(--cream);
-      padding: 1.2rem 1.25rem;
-      box-shadow: var(--shadow);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      background: var(--white);
+      padding: 1.25rem;
+      box-shadow: 4px 4px 0 var(--ink);
+      transition: transform 0.15s, box-shadow 0.15s;
     }
 
-    .card:nth-child(odd) { transform: rotate(-0.6deg); }
-    .card:nth-child(even) { transform: rotate(0.6deg); }
-    .card:hover { transform: rotate(0) translate(-3px,-3px) !important; box-shadow: var(--shadow-lg); }
+    .card:nth-child(odd)  { transform: rotate(-0.5deg); }
+    .card:nth-child(even) { transform: rotate( 0.5deg); }
+    .card:hover { transform: translate(-2px,-2px) rotate(0) !important; box-shadow: 6px 6px 0 var(--ink); }
 
-    .card .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
-
+    .card .icon { font-size: 1.6rem; margin-bottom: 0.6rem; display: block; }
     .card h3 {
-      margin: 0 0 0.4rem;
-      font-size: 0.95rem;
+      font-size: 0.88rem;
       font-weight: 900;
       text-transform: uppercase;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.04em;
       color: var(--blue);
+      margin-bottom: 0.4rem;
     }
-
-    .card p {
-      margin: 0;
-      font-size: 0.86rem;
-      color: var(--ink);
-      line-height: 1.55;
-      font-weight: 500;
-    }
+    .card p { font-size: 0.84rem; line-height: 1.6; color: #475569; font-weight: 500; }
 
     /* ── stats ── */
     .stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 0.85rem;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
     }
 
     .stat {
       border: 3px dashed var(--ink);
-      border-radius: 8px;
-      padding: 0.9rem 1rem;
-      background: var(--cream);
-      box-shadow: 3px 3px 0 var(--ink);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      background: rgba(255,255,255,0.15);
     }
 
     .stat b {
       display: block;
-      font-size: 1.5rem;
+      font-size: 1.75rem;
       font-weight: 900;
-      color: var(--red);
-      letter-spacing: -0.03em;
+      color: var(--yellow);
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 0.35rem;
     }
 
-    .stat span {
-      font-size: 0.74rem;
-      font-weight: 600;
-      color: var(--blue);
-      line-height: 1.35;
-    }
+    .stat span { font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.65); line-height: 1.4; }
 
     /* ── team ── */
-    .team-cards {
+    .team-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1rem;
     }
 
     .team-card {
-      border: 3px solid var(--ink);
+      border: 3px solid rgba(255,255,255,0.2);
       border-radius: 10px;
-      background: var(--blue);
-      padding: 1.2rem;
-      box-shadow: var(--shadow);
-      transition: transform 0.15s ease;
+      background: rgba(255,255,255,0.06);
+      padding: 1.25rem;
+      transition: background 0.15s, border-color 0.15s;
     }
 
-    .team-card:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow-lg); }
+    .team-card:hover { background: rgba(255,255,255,0.1); border-color: var(--yellow); }
 
-    .team-card .avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: 2px solid var(--yellow);
+    .team-avatar {
+      width: 44px;
+      height: 44px;
       background: var(--yellow);
+      border: 3px solid var(--ink);
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
-      margin-bottom: 0.75rem;
+      font-size: 1.2rem;
+      margin-bottom: 0.85rem;
     }
 
-    .team-card h3 {
-      margin: 0 0 0.2rem;
-      font-size: 0.92rem;
-      font-weight: 900;
-      color: var(--yellow);
-    }
-
+    .team-card h3 { font-size: 0.95rem; font-weight: 900; color: var(--yellow); margin-bottom: 0.2rem; }
     .team-card .role {
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: rgba(255,255,255,0.55);
-      margin-bottom: 0.5rem;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 0.6rem;
     }
-
-    .team-card p {
-      margin: 0;
-      font-size: 0.82rem;
-      color: rgba(255,255,255,0.8);
-      line-height: 1.5;
-    }
+    .team-card p { font-size: 0.82rem; color: rgba(255,255,255,0.75); line-height: 1.55; }
 
     /* ── quotes ── */
-    .quotes {
-      display: grid;
-      gap: 0.85rem;
-    }
+    .quotes { display: grid; gap: 1rem; }
 
     blockquote {
-      margin: 0;
       border: 3px solid var(--ink);
-      border-radius: 10px;
-      background: var(--cream);
-      padding: 1.1rem 1.25rem 1.1rem 2rem;
-      box-shadow: var(--shadow);
-      position: relative;
-      font-size: 0.88rem;
+      border-left: 6px solid var(--red);
+      border-radius: 8px;
+      background: var(--white);
+      padding: 1.1rem 1.25rem;
+      box-shadow: 4px 4px 0 var(--ink);
     }
 
-    blockquote::before {
-      content: '\201C';
-      position: absolute;
-      top: 0.2rem;
-      left: 0.55rem;
-      font-size: 2.8rem;
-      line-height: 1;
-      color: var(--red);
-      font-weight: 900;
-      opacity: 0.6;
-    }
-
-    blockquote p { margin: 0 0 0.4rem; font-style: italic; font-weight: 600; line-height: 1.5; color: var(--ink); }
+    blockquote p { font-size: 0.88rem; font-style: italic; font-weight: 600; line-height: 1.6; color: var(--ink); margin-bottom: 0.45rem; }
     blockquote footer { font-size: 0.72rem; font-weight: 700; color: var(--blue); }
 
     /* ── contact ── */
     .contact-box {
-      border: 3px solid var(--ink);
-      border-radius: 12px;
-      background: var(--blue);
-      padding: 1.75rem 2rem;
+      border: 4px solid var(--ink);
+      border-radius: 14px;
+      background: var(--yellow);
+      padding: 2rem 2.5rem;
       text-align: center;
-      box-shadow: var(--shadow-lg);
-      transform: rotate(-0.5deg);
+      box-shadow: 6px 6px 0 var(--ink);
+      transform: rotate(-0.4deg);
     }
 
-    .contact-box p {
-      margin: 0 0 0.75rem;
-      color: rgba(255,255,255,0.85);
-      font-size: 0.95rem;
-      font-weight: 600;
-    }
+    .contact-box p { font-size: 0.95rem; font-weight: 700; color: var(--blue); margin-bottom: 0.75rem; }
+    .contact-box strong { color: var(--ink); }
 
-    .contact-box .mail {
+    .contact-mail {
       display: inline-block;
       font-weight: 900;
-      color: var(--yellow);
       font-size: 1.1rem;
+      color: var(--blue);
       text-decoration: none;
-      border-bottom: 3px solid var(--yellow);
-      letter-spacing: -0.02em;
+      border-bottom: 3px solid var(--blue);
     }
 
-    .contact-box .mail:hover { color: #fff; border-bottom-color: #fff; }
+    .contact-mail:hover { color: var(--red); border-bottom-color: var(--red); }
 
     /* ── footer ── */
-    .fine-print {
-      margin-top: 2.5rem;
-      padding-top: 1rem;
-      border-top: 3px dashed var(--ink);
+    footer {
+      background: var(--ink);
+      padding: 1.25rem clamp(1rem, 4vw, 2.5rem);
+      text-align: center;
       font-size: 0.68rem;
       font-weight: 700;
-      color: var(--blue);
-      text-align: center;
-      line-height: 1.6;
-    }
-
-    /* ── price list ── */
-    .price-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 0.75rem;
-    }
-
-    .price-list li {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.7rem 0.9rem;
-      background: var(--cream);
-      border: 3px solid var(--ink);
-      border-radius: 6px;
-      box-shadow: 3px 3px 0 var(--ink);
-      font-weight: 700;
-      font-size: 0.88rem;
-    }
-
-    .price-list .price {
-      font-weight: 900;
-      font-size: 1rem;
-      color: var(--red);
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.04em;
+      line-height: 1.8;
     }
 
     @media (prefers-reduced-motion: reduce) {
       .ticker { animation: none; }
-      .card:nth-child(odd), .card:nth-child(even), .contact-box, .hero-stamp, .feature-strip { transform: none; }
-      .card:hover { transform: none !important; }
+      .card:nth-child(odd), .card:nth-child(even), .contact-box, .hero-stamp, .hero-board { transform: none; }
+      .card:hover, .btn:hover { transform: none !important; }
     }
   </style>
 </head>
 <body>
 
-  <nav class="topbar">
-    <a class="brand" href="#top">Arc <span>North</span></a>
-    <div class="links">
+  <nav>
+    <a class="brand" href="#top">Arc <em>North</em></a>
+    <div class="nav-links">
       <a href="#menu">Menu</a>
       <a href="#about">About</a>
       <a href="#team">Team</a>
       <a href="#contact">Contact</a>
     </div>
-    <span class="badge">Est. 2019 ✦ Barcelona</span>
+    <span class="nav-badge">Est. 2019 ✦ Barcelona</span>
   </nav>
 
   <div class="ticker-wrap" aria-hidden="true">
@@ -553,132 +502,134 @@
     </div>
   </div>
 
-  <main>
-    <div class="hero">
-      <span class="hero-stamp">Bakery &amp; café · Gràcia, BCN</span>
-      <h1>Good bread.<br /><em>No nonsense.</em></h1>
-      <p>
-        We've been making pastries, sandwiches and really strong coffee in the same corner spot since 2019.
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="hero-left">
+      <span class="hero-stamp">Bakery &amp; Café · Gràcia, BCN</span>
+      <h1>Good bread.<em>No nonsense.</em></h1>
+      <p class="hero-lede">
+        We've been baking pastries and pulling espresso in the same corner spot since 2019.
         Nothing on our menu has more than six ingredients. Come in, sit down, stay a while.
       </p>
       <div class="btn-row">
         <a class="btn btn-a" href="#menu">See the menu</a>
         <a class="btn btn-b" href="#contact">Find us</a>
       </div>
-      <div class="feature-strip">
-        <span class="intro">What people keep coming back for</span>
-        <span class="tag">Sourdough every morning</span>
-        <span class="tag">€2.50 filter coffee</span>
-        <span class="tag">Lunch from 12</span>
-        <span class="tag">No reservations needed</span>
+    </div>
+    <div class="hero-board" aria-label="Today's specials">
+      <div class="board-title">✦ Today's specials ✦</div>
+      <div class="board-item"><span>Croissant au beurre</span><span class="board-price">€4.50</span></div>
+      <div class="board-item"><span>Flat white</span><span class="board-price">€3.20</span></div>
+      <div class="board-item"><span>Avocado toast</span><span class="board-price">€7.50</span></div>
+      <div class="board-item"><span>Pain au chocolat</span><span class="board-price">€3.80</span></div>
+      <div class="board-item"><span>Fresh orange juice</span><span class="board-price">€3.50</span></div>
+      <div class="board-item"><span>Bagel + filling</span><span class="board-price">€6.00</span></div>
+      <p class="board-note">Prices may change · ask at the counter</p>
+    </div>
+  </section>
+
+  <!-- ── MENU ── -->
+  <div class="section-cream">
+    <div class="section-inner" id="menu">
+      <div class="divider">✦ Our menu ✦</div>
+      <h2 class="section-heading dark">Today's prices</h2>
+      <p class="section-sub dark">Updated regularly. Ask at the counter if something's missing or off.</p>
+      <div class="price-grid">
+        <div class="price-card"><span>Croissant</span><span class="price">€4.50</span></div>
+        <div class="price-card"><span>Pain au chocolat</span><span class="price">€3.80</span></div>
+        <div class="price-card"><span>Sourdough slice</span><span class="price">€2.00</span></div>
+        <div class="price-card"><span>Avocado toast</span><span class="price">€7.50</span></div>
+        <div class="price-card"><span>Filter coffee</span><span class="price">€2.50</span></div>
+        <div class="price-card"><span>Flat white</span><span class="price">€3.20</span></div>
+        <div class="price-card"><span>Fresh OJ</span><span class="price">€3.50</span></div>
+        <div class="price-card"><span>Bagel + filling</span><span class="price">€6.00</span></div>
       </div>
     </div>
+  </div>
 
-    <div class="divider">✦ Our menu ✦</div>
-
-    <section id="menu">
-      <h2>Today's prices</h2>
-      <p class="sub">Prices updated regularly. Ask at the counter if something's missing.</p>
-      <ul class="price-list">
-        <li><span>Croissant</span><span class="price">€4.50</span></li>
-        <li><span>Pain au chocolat</span><span class="price">€3.80</span></li>
-        <li><span>Sourdough slice</span><span class="price">€2.00</span></li>
-        <li><span>Avocado toast</span><span class="price">€7.50</span></li>
-        <li><span>Filter coffee</span><span class="price">€2.50</span></li>
-        <li><span>Flat white</span><span class="price">€3.20</span></li>
-        <li><span>Fresh OJ</span><span class="price">€3.50</span></li>
-        <li><span>Bagel + filling</span><span class="price">€6.00</span></li>
-      </ul>
-    </section>
-
-    <div class="divider">✦ Why bother ✦</div>
-
-    <section id="about">
-      <h2>The short version</h2>
-      <p class="sub">We're not trying to be a chain. Just a neighbourhood spot that actually cares.</p>
+  <!-- ── ABOUT ── -->
+  <div class="section-white">
+    <div class="section-inner" id="about">
+      <div class="divider">✦ Why bother ✦</div>
+      <h2 class="section-heading dark">The short version</h2>
+      <p class="section-sub dark">We're not trying to be a chain. Just a neighbourhood spot that actually cares.</p>
       <div class="cards">
         <article class="card">
-          <div class="icon">🌾</div>
+          <span class="icon">🌾</span>
           <h3>Real ingredients</h3>
-          <p>Everything is made from scratch. Our sourdough starter is older than the business. We don't rush it.</p>
+          <p>Everything made from scratch. Our sourdough starter is older than the business. We don't rush it.</p>
         </article>
         <article class="card">
-          <div class="icon">☕</div>
+          <span class="icon">☕</span>
           <h3>Decent coffee</h3>
-          <p>We roast our own beans with a roaster three streets over. Espresso, filter, cold brew — all solid.</p>
+          <p>We roast with a roaster three streets over. Espresso, filter, cold brew — all of it solid.</p>
         </article>
         <article class="card">
-          <div class="icon">📍</div>
+          <span class="icon">📍</span>
           <h3>Same spot, always</h3>
-          <p>No pop-ups, no dark kitchens. We're at Carrer de Verdi 14 every single morning. Rain or shine.</p>
+          <p>No pop-ups, no dark kitchens. We're at Carrer de Verdi 14 every morning, rain or shine.</p>
         </article>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <div class="divider">✦ Numbers ✦</div>
-
-    <section>
-      <h2>A few honest stats</h2>
-      <p class="sub">Nothing inflated. Just what actually happens here on a normal week.</p>
+  <!-- ── STATS ── -->
+  <div class="section-blue">
+    <div class="section-inner">
+      <div class="divider light">✦ Numbers ✦</div>
+      <h2 class="section-heading light">A few honest stats</h2>
+      <p class="section-sub light">Nothing inflated. Just what actually happens here on a normal week.</p>
       <div class="stats">
-        <div class="stat">
-          <b>~340</b>
-          <span>customers through the door on a busy Saturday</span>
-        </div>
-        <div class="stat">
-          <b>6</b>
-          <span>years in the same spot without moving or pivoting</span>
-        </div>
-        <div class="stat">
-          <b>12</b>
-          <span>pastry varieties baked fresh before 8am every day</span>
-        </div>
-        <div class="stat">
-          <b>0</b>
-          <span>loyalty app subscriptions. just come back, that's enough</span>
-        </div>
+        <div class="stat"><b>~340</b><span>customers on a busy Saturday</span></div>
+        <div class="stat"><b>6</b><span>years in the same spot, no pivoting</span></div>
+        <div class="stat"><b>12</b><span>pastry varieties baked fresh before 8am</span></div>
+        <div class="stat"><b>0</b><span>loyalty app subscriptions. just come back.</span></div>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <div class="divider">✦ The team ✦</div>
-
-    <section id="team">
-      <h2>Who's behind the counter</h2>
-      <p class="sub">Small team. Everyone does a bit of everything.</p>
-      <div class="team-cards">
+  <!-- ── TEAM ── -->
+  <div class="section-blue">
+    <div class="section-inner" id="team">
+      <div class="divider light">✦ The team ✦</div>
+      <h2 class="section-heading light">Who's behind the counter</h2>
+      <p class="section-sub light">Small team. Everyone does a bit of everything.</p>
+      <div class="team-grid">
         <div class="team-card">
-          <div class="avatar">👩‍🍳</div>
+          <div class="team-avatar">👩‍🍳</div>
           <h3>Mariona</h3>
           <div class="role">Head baker</div>
           <p>Up at 4:30 every morning. Responsible for the croissants everyone argues about.</p>
         </div>
         <div class="team-card">
-          <div class="avatar">☕</div>
+          <div class="team-avatar">☕</div>
           <h3>Pau</h3>
           <div class="role">Coffee + front of house</div>
           <p>Knows your order after two visits. Runs the espresso bar like it's a personal mission.</p>
         </div>
         <div class="team-card">
-          <div class="avatar">🧾</div>
+          <div class="team-avatar">🧾</div>
           <h3>Laia</h3>
           <div class="role">Operations</div>
           <p>Handles suppliers, scheduling and the fact that the dishwasher is always breaking.</p>
         </div>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <div class="divider">✦ Word of mouth ✦</div>
-
-    <section>
-      <h2>What regulars say</h2>
-      <p class="sub">Lightly edited. Mostly Google reviews.</p>
+  <!-- ── QUOTES ── -->
+  <div class="section-cream">
+    <div class="section-inner">
+      <div class="divider">✦ Word of mouth ✦</div>
+      <h2 class="section-heading dark">What regulars say</h2>
+      <p class="section-sub dark">Lightly edited. Mostly Google reviews.</p>
       <div class="quotes">
         <blockquote>
           <p>"Been coming here every Tuesday for three years. The croissant is genuinely the best in the neighbourhood and I've tried them all."</p>
           <footer>— Jaume R., Gràcia local</footer>
         </blockquote>
         <blockquote>
-          <p>"Nice place to work for a few hours. Coffee's good, no one rushes you out. Avocado toast is a bit pricey but it's worth it."</p>
+          <p>"Nice place to work for a few hours. Coffee's good, no one rushes you out. Avocado toast is a bit pricey but worth it."</p>
           <footer>— Freelancer leaving a 4-star review</footer>
         </blockquote>
         <blockquote>
@@ -686,23 +637,25 @@
           <footer>— Anonymous via Google Maps</footer>
         </blockquote>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <div class="divider">✦ Come find us ✦</div>
-
-    <section id="contact">
+  <!-- ── CONTACT ── -->
+  <div class="section-white">
+    <div class="section-inner" id="contact">
+      <div class="divider">✦ Come find us ✦</div>
       <div class="contact-box">
-        <p>We're at <strong style="color:#fff">Carrer de Verdi 14, Gràcia</strong>. Open Monday to Sunday, 7am to 7pm.</p>
-        <a class="mail" href="mailto:hola@arcnorth.example">hola@arcnorth.example</a>
-        <p style="margin: 0.85rem 0 0; font-size: 0.8rem;">For catering enquiries, give us a couple of days. For everything else, just come in.</p>
+        <p>We're at <strong>Carrer de Verdi 14, Gràcia</strong>. Open Monday to Sunday, 7am to 7pm.</p>
+        <a class="contact-mail" href="mailto:hola@arcnorth.example">hola@arcnorth.example</a>
+        <p style="margin-top:0.85rem;font-size:0.8rem;color:#475569;">For catering enquiries give us a couple of days. For everything else, just come in.</p>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <p class="fine-print">
-      © 2026 Arc North Bakery — Carrer de Verdi 14, Gràcia, Barcelona.<br />
-      Fictional demo site. All prices, people and pastries are illustrative.
-    </p>
-  </main>
+  <footer>
+    © 2026 Arc North Bakery — Carrer de Verdi 14, Gràcia, Barcelona.<br />
+    Fictional demo site. All prices, people and pastries are illustrative.
+  </footer>
 
 </body>
 </html>
