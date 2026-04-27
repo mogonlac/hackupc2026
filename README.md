@@ -1,7 +1,7 @@
 # SLAP
 
 ```text
-First Prize Winner of Bending Spoons.
+🏆 1st Place — Bending Spoons Challenge @ HackUPC
 ```
 
 **From Slack messages to actionable GitHub issues — without wasting engineering time.**
