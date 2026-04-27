@@ -1,5 +1,9 @@
 # SLAP
 
+```text
+First Prize Winner of Bending Spoons.
+```
+
 **From Slack messages to actionable GitHub issues — without wasting engineering time.**
 
 SLAP is a workflow automation tool that helps non-technical teams report small but costly infrastructure and website errors directly from Slack. Instead of sending emails, chasing managers, waiting for someone to translate the problem into technical language, and manually creating a task, SLAP turns a simple Slack message into a structured, trackable GitHub issue ready for developer review.
@@ -435,7 +439,7 @@ Possible dashboard metrics include:
 ## Authors
 
 * Marina Dasca Bravo
-* Nick 
+* Nicholas Tchakov
 * Víctor Asensio Bermudez
 * Phoebe Iglesias Cividanes
 
@@ -450,5 +454,4 @@ Example:
 ```text
 HackUPC 2026 License
 ```
-
 ##
