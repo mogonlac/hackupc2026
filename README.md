@@ -434,8 +434,13 @@ Possible dashboard metrics include:
 * Requests by assigned developer.
 * GitHub issue status.
 
+### Dashboard Company
 ![Dashboard Company](./assets/dashboard_company.png)
+
+### Dashboard Engineering
 ![Dashboard Engineering](./assets/dashboard_engineering.png)
+
+### Dashboard Employee (Nadia Sato)
 ![Dashboard Employee](./assets/dashboard_nadia-sato2.png)
 
 ---
