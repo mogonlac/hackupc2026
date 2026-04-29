@@ -192,8 +192,6 @@ The dashboard provides visibility over all requests, making it easier to monitor
 
 ## Tech Stack
 
-> Adjust this section depending on the final implementation.
-
 * **Slack API** — user interaction and developer notifications.
 * **Gemini API** — natural language understanding and request structuring.
 * **GitHub API** — issue creation and repository integration.
