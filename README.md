@@ -155,29 +155,15 @@ SLAP is built to assist, not blindly modify production systems. Issues are creat
 
 ## Request Lifecycle
 
-```text
-Non-technical user
-        │
-        ▼
-Slack message
-        │
-        ▼
-SLAP bot
-        │
-        ▼
-Gemini API structures the request
-        │
-        ▼
-Request is stored and classified
-        │
-        ▼
-GitHub issue is created
-        │
-        ▼
-Developer is notified in Slack
-        │
-        ▼
-Dashboard tracks the process
+```mermaid
+graph TD
+  A[Non-technical user] --> B[Slack message]
+  B --> C[SLAP bot]
+  C --> D[Gemini API structures request]
+  D --> E[Request stored & classified]
+  E --> F[GitHub issue created]
+  F --> G[Developer notified in Slack]
+  G --> H[Dashboard tracks process]
 ```
 
 ---
